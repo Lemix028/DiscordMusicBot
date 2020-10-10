@@ -32,16 +32,7 @@ CREATE TABLE IF NOT EXISTS `dbot_statistic_log` (
   `lavalink_players_total` int(11) DEFAULT NULL,
   `lavalink_players_active` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- Daten Export vom Benutzer nicht ausgewählt
-
--- Exportiere Struktur von Tabelle dbot.guilds
-CREATE TABLE IF NOT EXISTS `guilds` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `Json` json NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Daten Export vom Benutzer nicht ausgewählt
 
