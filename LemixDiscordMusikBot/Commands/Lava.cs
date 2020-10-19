@@ -27,6 +27,7 @@ using System.Management;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 
+
 namespace LemixDiscordMusikBot.Commands
 {
 
@@ -1516,6 +1517,7 @@ namespace LemixDiscordMusikBot.Commands
         public async Task QueueAsync(CommandContext ctx, [Description("Youtube, Soundcloud, Twitch, Vimeo Links.\nTwitch Livestream support.")] Uri Url) {
             if (!DeletePool.ContainsKey(ctx.Message.Id))
                 DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
             if (Url.ToString() == String.Empty)
                 return;
             if (CheckHasCooldown(ctx))
@@ -3907,6 +3909,106 @@ namespace LemixDiscordMusikBot.Commands
             DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
 
         }
+
+        [Command("prefix")]
+        public async Task PrefixAsync(CommandContext ctx)
+        {
+            if (!DeletePool.ContainsKey(ctx.Message.Id))
+                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
+            if (CheckHasCooldown(ctx))
+            {
+                SendCooldownAsync(ctx);
+                return;
+            }
+            if (CheckHasPermission(ctx, role.admin))
+                return;
+
+            var reader = db.Query($"SELECT Prefix FROM data WHERE GuildId IN ({ctx.Guild.Id})");
+            DiscordEmoji SetNewEmoji = DiscordEmoji.FromName(ctx.Client, ":regional_indicator_s:");
+            DiscordEmoji Crossed = DiscordEmoji.FromName(ctx.Client, ":x:");
+            string prefixes = String.Empty;
+            while (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    if (reader.GetString(0) != String.Empty)
+                        prefixes = reader.GetString(0);
+                }
+
+                await reader.NextResultAsync();
+            }
+            db.Disconnect();
+            var PrefixFirstEmbed = new DiscordEmbedBuilder
+            {
+                Title = $"Prefixes for this server!",
+                Description = $"Current prefix: `{prefixes}`",
+                Color = DiscordColor.DarkGreen
+            };
+            PrefixFirstEmbed.AddField("Set new Prefix", $"To set a new prefix react with {SetNewEmoji}.");
+            PrefixFirstEmbed.AddField("Cancel", $"To cancel this action react with {Crossed}.");
+            var PrefixFirstMsg = await ctx.Channel.SendMessageAsync(embed: PrefixFirstEmbed);
+            await PrefixFirstMsg.CreateReactionAsync(SetNewEmoji);
+            await PrefixFirstMsg.CreateReactionAsync(Crossed);
+
+            var AbortEmbed = new DiscordEmbedBuilder
+            {
+                Title = $"Action aborted",
+                Color = DiscordColor.Red
+            };
+
+
+            InteractivityResult<MessageReactionAddEventArgs> firstresult = await ctx.Client.GetInteractivity().WaitForReactionAsync(x => x.Message == PrefixFirstMsg && x.User != ctx.Client.CurrentUser);
+            if (firstresult.TimedOut)
+            {
+                await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
+                await PrefixFirstMsg.DeleteAsync();
+                return;
+            }
+
+            // await PrefixFirstMsg.DeleteReactionAsync(result.Result.Emoji, result.Result.User);
+
+            if (firstresult.Result.Emoji == SetNewEmoji)
+            {
+                //await PrefixFirstMsg.DeleteAsync();
+                var PrefixSetNewEmbed = new DiscordEmbedBuilder
+                {
+                    Title = "Set new prefix!",
+                    Description = "Please write the new prefix below.\nOnly one letter or special char!",
+                    Color = DiscordColor.DarkGreen
+                };
+                await ctx.Channel.SendMessageAsync(embed: PrefixSetNewEmbed);
+                InteractivityResult<DiscordMessage> newprefixresult = await ctx.Client.GetInteractivity().WaitForMessageAsync(x => x.Author == firstresult.Result.User);
+                if (newprefixresult.TimedOut)
+                {
+                    await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
+                    return;
+                }
+                string newprefix = newprefixresult.Result.Content.ToCharArray().First().ToString();
+                var PrefixNewSuccessEmbed = new DiscordEmbedBuilder
+                {
+                    Title = "New Prefix succesfully set!",
+                    Color = DiscordColor.DarkGreen
+                };
+                PrefixNewSuccessEmbed.AddField("Old Prefix", $"`{prefixes}`");
+                PrefixNewSuccessEmbed.AddField("New Prefix", $"`{newprefix}`");
+
+                db.Execute($"UPDATE data SET Prefix = '{newprefix}' WHERE GuildId IN ({ctx.Guild.Id})");
+
+
+                await ctx.Channel.SendMessageAsync(embed: PrefixNewSuccessEmbed);
+
+            }
+
+            if (firstresult.Result.Emoji == Crossed)
+            {
+                await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
+                await PrefixFirstMsg.DeleteAsync();
+                return;
+            }
+
+        }
+
 
         //Description first char:
         // 1 or nothing(please use 1 to provide errors) = everyone

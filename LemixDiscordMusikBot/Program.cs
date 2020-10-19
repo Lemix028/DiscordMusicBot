@@ -15,8 +15,24 @@ namespace LemixDiscordMusikBot
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
             DateTime buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
             string Version = $"{version}p \n   Build Date: ({buildDate})";
-            IEnumerable<string> DefaultConfig = new string[] { "{\"token\": \"\",\"prefix\": [\"!\", \"?\"],\"LavalinkServerIP\": \"127.0.0.1\",\"LavalinkServerPort\": 2333,\"LavalinkServerPassword\": \"youshallnotpass\",\"DatabaseHostname\": \"localhost\",\"DatabaseDbName\": \"dbot\",\"DatabaseUid\": \"root\",\"DatabasePassword\": \"pwd\",\"DatabasePort\": 3306, \"StatusItems\": [ {\"Text\":\"auf {0} Servern | Made by Lemix\", \"Activity\":1,\"StatusType\":\"dnd\"}, {\"Text\":\"asdfcuzghuzhgodsaf\",\"Activity\":0,\"StatusType\":\"dnd\"}],\"StatusRefreshTimer\" : 120000,\"NoSongPicture\" : @\"https://www.bund.net/fileadmin/user_upload_bund/bilder/tiere_und_pflanzen/bedrohte_arten/fischotter.jpg\",\"DefaultVolume\" : 10}" };
-            
+           
+            Config NewConfig = new Config();
+            NewConfig.Token = "";
+            NewConfig.Prefix = new string[] { "!", "?" };
+            NewConfig.LavalinkServerIP = "127.0.0.1";
+            NewConfig.LavalinkServerPassword = "youshallnotpass";
+            NewConfig.LavalinkServerPort = 2333;
+            NewConfig.BotUsername = "TotallyLemixBot";
+            NewConfig.DatabaseHostname = "localhost";
+            NewConfig.DatabaseDbName = "";
+            NewConfig.DatabaseUid = "root";
+            NewConfig.DatabasePassword = "secretpassword";
+            NewConfig.DatabasePort = 3306;
+            NewConfig.StatusRefreshTimer = 600;
+            NewConfig.StatusItems = new StatusItem[] { new StatusItem() { Activity = DSharpPlus.Entities.ActivityType.Playing, StatusType = DSharpPlus.Entities.UserStatus.Online, Text = "Placeholder text here" } };
+            NewConfig.DefaultVolume = 10;
+            NewConfig.NoSongPicture = "https://www.bund.net/fileadmin/user_upload_bund/bilder/tiere_und_pflanzen/bedrohte_arten/fischotter.jpg";
+
             Console.Title = $"Discordbot by Lemix {Version}";
 
             DiscordBot bot = new DiscordBot();
@@ -41,7 +57,17 @@ namespace LemixDiscordMusikBot
                     try
                     {
                         Console.ForegroundColor = ConsoleColor.Yellow;
-                        File.WriteAllLines("config.json", DefaultConfig);
+                        TextWriter writer = null;
+                        try
+                        {
+                            writer = new StreamWriter("config.json", false);
+                            writer.Write(JsonConvert.SerializeObject(NewConfig, Formatting.Indented));
+                        }
+                        finally
+                        {
+                            if (writer != null)
+                                writer.Close();
+                        }
                         Console.Write("New config file created!\nPlease change the default values in config.json and restart the bot.\n");
                         Console.WriteLine("Press any Key to close the Window");
                         Console.ReadKey();

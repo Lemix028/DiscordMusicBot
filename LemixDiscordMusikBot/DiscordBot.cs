@@ -26,7 +26,9 @@ namespace LemixDiscordMusikBot
         public int GuildCount = 0;
 
         public Dictionary<ulong, List<String>> Prefixes = new Dictionary<ulong, List<String>>();
-        public IReadOnlyDictionary<int, CommandsNextExtension> CommandsTask { get; set;}
+        public IReadOnlyDictionary<int, CommandsNextExtension> CommandsTask { get; set; }
+
+        private DBConnection db;
 
         public Boolean debug = true;
 
@@ -36,7 +38,7 @@ namespace LemixDiscordMusikBot
         {
 
             var json = string.Empty;
-           // Console.WriteLine(JsonConvert.SerializeObject(new StatusItem {Activity = ActivityType.Playing, StatusType = UserStatus.DoNotDisturb, Text = "asdfcuzghuzhgodsaf" }));
+            // Console.WriteLine(JsonConvert.SerializeObject(new StatusItem {Activity = ActivityType.Playing, StatusType = UserStatus.DoNotDisturb, Text = "asdfcuzghuzhgodsaf" }));
             try
             {
                 using (var fs = File.OpenRead("config.json"))
@@ -45,12 +47,12 @@ namespace LemixDiscordMusikBot
 
                 configJson = JsonConvert.DeserializeObject<Config>(json);
             }
-            catch(FileNotFoundException e)
+            catch (FileNotFoundException e)
             {
                 if (debug)
                 {
                     Console.WriteLine(e);
-                } 
+                }
                 else
                 {
                     Console.WriteLine("Config konnte nicht gefunden werden!");
@@ -86,17 +88,19 @@ namespace LemixDiscordMusikBot
                 AutoReconnect = true,
                 LogTimestampFormat = "dd-MM-yyyy HH:mm:ss",
                 MinimumLogLevel = LogLevel.Debug
-                
-                
+
+
 
             };
             Client = new DiscordShardedClient(dconfig);
-            
+
+            db = new DBConnection(Client.Logger, configJson);
+
             Client.Ready += async (s, e) => { await OnClientReady(s, e); };
             Client.GuildCreated += async (s, e) => { await OnGuildCreated(s, e); };
             Client.GuildAvailable += async (s, e) => { await OnGuildAvailable(s, e); };
             Client.GuildDeleted += async (s, e) => { await OnGuildDeleted(s, e); };
-            Client.ClientErrored += async (s, e) => { await OnClientError(s, e); }; 
+            Client.ClientErrored += async (s, e) => { await OnClientError(s, e); };
             Client.MessageReactionAdded += async (s, e) => { await OnMessageReactionAdded(s, e); };
 
 
@@ -104,18 +108,18 @@ namespace LemixDiscordMusikBot
             {
                 StringPrefixes = configJson.Prefix,
                 EnableDms = false,
-                DmHelp = false,
-             //   PrefixResolver = CustomResolvePrefixAsync,
+                DmHelp = true,
+                PrefixResolver = ResolvePrefixAsync,
                 EnableMentionPrefix = true,
                 EnableDefaultHelp = false
-                
+
 
             };
             CommandsTask = await Client.UseCommandsNextAsync(commandsConfig);
             foreach (KeyValuePair<int, CommandsNextExtension> entry in CommandsTask)
             {
                 var cmd = entry.Value;
-                
+
                 cmd.RegisterCommands<Lava>();
                 cmd.CommandExecuted += async (s, e) => { await OnCommandExecuted(s, e); }; ;
                 cmd.CommandErrored += async (s, e) => { await OnCommandError(s, e); }; ;
@@ -131,11 +135,11 @@ namespace LemixDiscordMusikBot
 
             LavalinkConfiguration lcfg = new LavalinkConfiguration
             {
-                SocketEndpoint =  new ConnectionEndpoint(configJson.LavalinkServerIP, configJson.LavalinkServerPort),
+                SocketEndpoint = new ConnectionEndpoint(configJson.LavalinkServerIP, configJson.LavalinkServerPort),
                 RestEndpoint = new ConnectionEndpoint(configJson.LavalinkServerIP, configJson.LavalinkServerPort),
                 Password = configJson.LavalinkServerPassword
             };
-            
+
             await Client.StartAsync().ConfigureAwait(false);
             Client.Logger.LogInformation(new EventId(7777, "LavalinkStartup"), $"Try to connect to {configJson.LavalinkServerIP}:{configJson.LavalinkServerPort}");
             var LavaTask = Client.UseLavalinkAsync();
@@ -156,7 +160,7 @@ namespace LemixDiscordMusikBot
         }
 
         private Task LavaLinkNodeDisconnect(LavalinkNodeConnection s, NodeDisconnectedEventArgs e)
-        { 
+        {
             return Task.CompletedTask;
         }
 
@@ -172,7 +176,7 @@ namespace LemixDiscordMusikBot
             {
                 return;
             }
-            
+
             e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
             Console.WriteLine(e.Exception.StackTrace);
             if (e.Exception is ChecksFailedException)
@@ -185,14 +189,14 @@ namespace LemixDiscordMusikBot
                     Title = $"Zugriff verweigert {emoji}",
                     Description = $"Du oder der Bot hat nicht die nötigen Rechte um den Befehl auszuführen!",
                     Color = DiscordColor.Red
-                   
+
                 };
                 try
                 {
                     await e.Context.RespondAsync(embed: embed);
                 }
                 catch { }
-               
+
             }
         }
 
@@ -208,42 +212,124 @@ namespace LemixDiscordMusikBot
             return Task.CompletedTask;
         }
         //GUILD COUNT 
-        private Task OnGuildCreated(DiscordClient s, GuildCreateEventArgs e)
+        private async Task<Task> OnGuildCreated(DiscordClient s, GuildCreateEventArgs e)
         {
-            
+
+            StringBuilder prefixes = new StringBuilder();
+            int i = 0;
+            foreach (string entry in configJson.Prefix)
+            {
+                if (i == 0)
+                {
+                    prefixes.Append(entry);
+                    i++;
+                    continue;
+                }
+                prefixes.Append(",");
+                prefixes.Append(entry);
+                i++;
+
+            }
+            var reader = db.Query($"SELECT * FROM data WHERE GuildId = {e.Guild.Id}");
+            bool isEmpty = true;
+            while (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    if (reader.GetString(1) == String.Empty)
+                        isEmpty = true;
+                    else
+                        isEmpty = false;
+                }
+
+                await reader.NextResultAsync();
+            }
+            db.Disconnect();
+            if (isEmpty)
+                db.Execute($"INSERT INTO data (GuildId, Prefix) VALUES ({e.Guild.Id}, '{prefixes}')");
+
+
             s.Logger.LogInformation(new EventId(7777, "GuildCreated"), $"Guild available: {e.Guild.Name}");
             GuildCount++;
-            // await e.Client.UpdateStatusAsync(new DiscordActivity($"auf {GuildCount} Servern und {e.Client.ShardCount} Sharded Clients | Made by Lemix | In Development", ActivityType.Playing), UserStatus.DoNotDisturb);
             return Task.CompletedTask;
+
         }
-        private Task OnGuildAvailable(DiscordClient s, GuildCreateEventArgs e)
+        private async Task<Task> OnGuildAvailable(DiscordClient s, GuildCreateEventArgs e)
         {
+            StringBuilder prefixes = new StringBuilder();
+            int i = 0;
+            foreach (string entry in configJson.Prefix)
+            {
+                if (i == 0)
+                {
+                    prefixes.Append(entry);
+                    i++;
+                    continue;
+                }
+                prefixes.Append(",");
+                prefixes.Append(entry);
+                i++;
+
+            }
+            var reader = db.Query($"SELECT * FROM data WHERE GuildId = {e.Guild.Id}");
+            bool isEmpty = true;
+            while (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    if (reader.GetString(1) == String.Empty)
+                        isEmpty = true;
+                    else
+                        isEmpty = false;
+                }
+
+                await reader.NextResultAsync();
+            }
+            db.Disconnect();
+            if (isEmpty)
+                db.Execute($"INSERT INTO data (GuildId, Prefix) VALUES ({e.Guild.Id}, '{prefixes}')");
+
+
             s.Logger.LogInformation(new EventId(7777, "GuildAvailable"), $"Guild available: {e.Guild.Name}");
             GuildCount++;
             return Task.CompletedTask;
         }
         private Task OnGuildDeleted(DiscordClient s, GuildDeleteEventArgs e)
         {
-                s.Logger.LogInformation(new EventId(7777, "GuildDeleted"), $"Guild unavailable: {e.Guild.Name}");
-                GuildCount--;
+            s.Logger.LogInformation(new EventId(7777, "GuildDeleted"), $"Guild unavailable: {e.Guild.Name}");
+            GuildCount--;
             return Task.CompletedTask;
         }
 
         private async Task<Task> OnClientReady(DiscordClient s, ReadyEventArgs e)
         {
-            try
-            {
-                await s.UpdateCurrentUserAsync("Crowmusic");
-                s.Logger.LogInformation(new EventId(7777, "ClientReady"), "Client is ready to process events");
-                // await e.Client.UpdateStatusAsync(new DiscordActivity($"auf {GuildCount} Servern und auf {e.Client.ShardCount} Sharded Clients | Made by Lemix | In Development", ActivityType.Playing), UserStatus.DoNotDisturb);
-                await Task.Factory.StartNew(() => UpdateStatus(s, e));
-                
-            }
-            catch (Exception e1)
-            {
-                Console.WriteLine(e1);
-            }
-            return Task.CompletedTask;
+            
+                try
+                {
+                    try
+                    {
+                        if (s.CurrentUser.Username != configJson.BotUsername)
+                        {
+                            await s.UpdateCurrentUserAsync(configJson.BotUsername);
+                            s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username set to {configJson.BotUsername}.");
+                        }
+
+                    }
+                    catch
+                    {
+                        s.Logger.LogWarning(new EventId(7777, "ClientReady"), "Username cannot be set. Maybe you have reached the limit, try again later.");
+                    }
+
+                    s.Logger.LogInformation(new EventId(7777, "ClientReady"), "Client is ready to process events");
+                    // await e.Client.UpdateStatusAsync(new DiscordActivity($"auf {GuildCount} Servern und auf {e.Client.ShardCount} Sharded Clients | Made by Lemix | In Development", ActivityType.Playing), UserStatus.DoNotDisturb);
+                    await Task.Factory.StartNew(() => UpdateStatus(s, e));
+
+                }
+                catch (Exception e1)
+                {
+                    Console.WriteLine(e1);
+                }
+                return Task.CompletedTask;
 
         }
         private async Task<Task> UpdateStatus(DiscordClient s, ReadyEventArgs e)
@@ -259,7 +345,7 @@ namespace LemixDiscordMusikBot
                 DiscordEmbedBuilder BootedEmbed = new DiscordEmbedBuilder
                 {
                     Title = "Bot succesfully booted!",
-                    Description = $"Botname: `{s.CurrentUser.Username}`\nId: `{s.CurrentUser.Id}`\nDSharpPlus Version: `{s.VersionString}`\nVersion: `{version}`\nBuild Date: `{buildDate}`", 
+                    Description = $"Botname: `{s.CurrentUser.Username}`\nId: `{s.CurrentUser.Id}`\nDSharpPlus Version: `{s.VersionString}`\nVersion: `{version}`\nBuild Date: `{buildDate}`",
                     Color = DiscordColor.DarkGreen
                 };
                 BootedEmbed.WithFooter("Programmed by Lemix | Powered by DSharpPlus");
@@ -274,12 +360,12 @@ namespace LemixDiscordMusikBot
                     StatusItem entry;
                     if (StatusCount >= configJson.StatusItems.Length)
                         StatusCount = 0;
-                        entry = configJson.StatusItems[StatusCount];
-                        StatusCount++;
+                    entry = configJson.StatusItems[StatusCount];
+                    StatusCount++;
 
                     await s.UpdateStatusAsync(new DiscordActivity($"{String.Format(entry.Text, GuildCount)}", entry.Activity), entry.StatusType);
-                        
-                        i = GuildCount;
+
+                    i = GuildCount;
                     await Task.Delay(configJson.StatusRefreshTimer);
                 }
             }
@@ -290,38 +376,47 @@ namespace LemixDiscordMusikBot
         }
 
 
-        /*       private Task<int> CustomResolvePrefixAsync(DiscordMessage msg)
-               {
+        private async Task<int> ResolvePrefixAsync(DiscordMessage msg)
+        {
 
-                   msg.Channel.gui
-                   var gld = msg.Channel.Guild;
-                   if (gld == null)
-                       return Task.FromResult(-1);
+            var reader = db.Query($"SELECT Prefix FROM data WHERE GuildId IN ({msg.Channel.GuildId})");
+            //  var reader = conn.Query($"SELECT * FROM data WHERE GuildId = {e.Guild.Id}");
+            string prefix = String.Empty;
+            while (reader.HasRows)
+            {
+                while (reader.Read())
+                {
+                    if (reader.GetString(0) != String.Empty)
+                        prefix = reader.GetString(0);
+                }
 
-                   var gldId = (long)gld.Id;
-                   var db = new DatabaseContext(this.ConnectionStringProvider);
-                   var gpfix = db.Prefixes.SingleOrDefault(x => x.GuildId == gldId);
-                   if (gpfix != null)
-                   {
-                       foreach (var pfix in gpfix.Prefixes)
-                       {
-                           var pfixLocation = msg.GetStringPrefixLength(pfix);
-                           if (pfixLocation != -1)
-                               return Task.FromResult(pfixLocation);
-                       }
+                await reader.NextResultAsync();
+            }
+            db.Disconnect();
+            List<string> prefixes = new List<string>();
+            bool b = true;
+            foreach (char entry in prefix.ToCharArray())
+            {
+                if (b == true)
+                {
+                    prefixes.Add(entry.ToString());
+                    b = false;
+                }
+                else
+                {
+                    b = true;
+                }
 
-                       if (gpfix.EnableDefault != true)
-                           return Task.FromResult(-1);
-                   }
+            }
 
-                   foreach (var pfix in this.Configuration.Discord.DefaultPrefixes)
-                   {
-                       var pfixLocation = msg.GetStringPrefixLength(pfix);
-                       if (pfixLocation != -1)
-                           return Task.FromResult(pfixLocation);
-                   }
+            foreach (string pfix in prefixes)
+            {
+                var pfixLocation = msg.GetStringPrefixLength(pfix);
+                if (pfixLocation != -1)
+                    return pfixLocation;
+            }
 
-                   return Task.FromResult(-1);
-               }*/
+            return -1;
+        }
     }
 }

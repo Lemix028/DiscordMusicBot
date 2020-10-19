@@ -8,33 +8,35 @@ namespace LemixDiscordMusikBot
     public struct Config
     {
         [JsonProperty("token")]
-        public String Token { get; private set; }
+        public String Token { get;  set; }
         [JsonProperty("prefix")]
-        public String[] Prefix { get; private set; }
+        public String[] Prefix { get;  set; }
+        [JsonProperty("BotUsername")]
+        public String BotUsername { get; set; }
         [JsonProperty("LavalinkServerIP")]
-        public String LavalinkServerIP { get; private set; }
+        public String LavalinkServerIP { get;  set; }
         [JsonProperty("LavalinkServerPort")]
-        public int LavalinkServerPort { get; private set; }
+        public int LavalinkServerPort { get;  set; }
         [JsonProperty("LavalinkServerPassword")]
-        public String LavalinkServerPassword { get; private set; }
+        public String LavalinkServerPassword { get;  set; }
         [JsonProperty("DatabaseHostname")]
-        public String DatabaseHostname { get; private set; }
+        public String DatabaseHostname { get;  set; }
         [JsonProperty("DatabaseDbName")]
-        public String DatabaseDbName { get; private set; }
+        public String DatabaseDbName { get;  set; }
         [JsonProperty("DatabaseUid")]
-        public String DatabaseUid { get; private set; }
+        public String DatabaseUid { get;  set; }
         [JsonProperty("DatabasePassword")]
-        public String DatabasePassword { get; private set; }
+        public String DatabasePassword { get;  set; }
         [JsonProperty("DatabasePort")]
-        public int DatabasePort { get; private set; }
+        public int DatabasePort { get;  set; }
         [JsonProperty("StatusItems")]
-        public StatusItem[] StatusItems { get; private set; }
+        public StatusItem[] StatusItems { get;  set; }
         [JsonProperty("StatusRefreshTimer")]
-        public int StatusRefreshTimer { get; private set; }
+        public int StatusRefreshTimer { get;  set; }
         [JsonProperty("NoSongPicture")]
-        public String NoSongPicture { get; private set; }
+        public String NoSongPicture { get;  set; }
         [JsonProperty("DefaultVolume")]
-        public int DefaultVolume { get; private set; }
+        public int DefaultVolume { get;  set; }
 
     }
     public struct StatusItem

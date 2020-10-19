@@ -61,8 +61,8 @@
     <PackageReference Include="DSharpPlus.Lavalink" Version="4.0.0-nightly-00737" />
     <PackageReference Include="DSharpPlus.VoiceNext" Version="4.0.0-nightly-00737" />
     <PackageReference Include="MySql.Data" Version="8.0.21" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.0.0-rc.1.20451.14" />
-    <PackageReference Include="System.Management" Version="5.0.0-rc.1.20451.14" />
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.0.0-rc.2.20475.5" />
+    <PackageReference Include="System.Management" Version="5.0.0-rc.2.20475.5" />
   </ItemGroup>
 
   <ItemGroup>
