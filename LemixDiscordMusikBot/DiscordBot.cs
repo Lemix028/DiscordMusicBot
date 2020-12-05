@@ -106,7 +106,7 @@ namespace LemixDiscordMusikBot
 
             CommandsNextConfiguration commandsConfig = new CommandsNextConfiguration
             {
-                StringPrefixes = configJson.Prefix,
+   //             StringPrefixes = configJson.Prefix,
                 EnableDms = false,
                 DmHelp = true,
                 PrefixResolver = ResolvePrefixAsync,

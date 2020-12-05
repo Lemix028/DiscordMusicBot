@@ -337,7 +337,6 @@ namespace LemixDiscordMusikBot.Commands
                 List<double> DiscordBotRAMItems = new List<double>();
                 List<double> LavalinkCPUItems = new List<double>();
                 List<long> LavalinkRAMItems = new List<long>();
-                Console.WriteLine("Count: " + TempSystemUsageLog.Count());
                 foreach (KeyValuePair<DateTime, SystemUsageItem> entry in TempSystemUsageLog.ToList())
                 {
                     if((LogDate - TimeSpan.FromHours(1)) < entry.Key)
@@ -365,7 +364,6 @@ namespace LemixDiscordMusikBot.Commands
             }
             catch { }
 
-                Console.WriteLine(@$"INSERT INTO dbot_statistic_log(log_date, guilds_count, ping, active_shards, dbot_cpu, dbot_ram, dbot_uptime, lavalink_cpu, lavalink_ram, lavalink_uptime, lavalink_players_total, lavalink_players_active) VALUES ('{LogDate.ToString("yyyy-MM-dd HH:mm:ss")}',{GuildCount},{PingAverage.ToString().Replace(",", ".")},{ActiveShards},{DiscordBotCPUAverage.ToString().Replace(",", ".")},{DiscordBotRAMItemsAverage.ToString().Replace(",", ".")},'{String.Format("{0:00}:{1:00}:{2:00}", Math.Floor(DiscordBotUptime.TotalHours), DiscordBotUptime.Minutes, DiscordBotUptime.Seconds)}',{LavalinkCPUItemsAverage.ToString().Replace(",", ".")},{SizeToString(Convert.ToInt64(LavalinkRAMItemsAverage), false).ToString().Replace(",", ".")},'{String.Format("{0:00}:{1:00}:{2:00}", Math.Floor(LavalinkUptime.TotalHours), LavalinkUptime.Minutes, LavalinkUptime.Seconds)}',{LavalinkPlayersTotal},{LavalinkPlayersActive});");
                 db.Execute(@$"INSERT INTO dbot_statistic_log(log_date, guilds_count, ping, active_shards, dbot_cpu, dbot_ram, dbot_uptime, lavalink_cpu, lavalink_ram, lavalink_uptime, lavalink_players_total, lavalink_players_active) VALUES ('{LogDate.ToString("yyyy-MM-dd HH:mm:ss")}',{GuildCount},{PingAverage.ToString().Replace(",",".")},{ActiveShards},{DiscordBotCPUAverage.ToString().Replace(",", ".")},{DiscordBotRAMItemsAverage.ToString().Replace(",", ".")},'{String.Format("{0:00}:{1:00}:{2:00}", Math.Floor(DiscordBotUptime.TotalHours), DiscordBotUptime.Minutes, DiscordBotUptime.Seconds)}',{LavalinkCPUItemsAverage.ToString().Replace(",",".")},{SizeToString(Convert.ToInt64(LavalinkRAMItemsAverage), false).ToString().Replace(",", ".")},'{String.Format("{0:00}:{1:00}:{2:00}", Math.Floor(LavalinkUptime.TotalHours), LavalinkUptime.Minutes, LavalinkUptime.Seconds)}',{LavalinkPlayersTotal},{LavalinkPlayersActive});");
                 PingItems.Clear();
                 DiscordBotCPUItems.Clear();
@@ -1371,10 +1369,13 @@ namespace LemixDiscordMusikBot.Commands
                 GuildId = ctx.Guild.Id;
                 if (!DeletePool.ContainsKey(ctx.Message.Id))
                     DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
                 if (CheckHasCooldown(ctx, GuildId))
                 {
+                    
                     if (ctx.Command.Name == "join" || ctx.Command.Name == "connect")
                     {
+                        
                         SendCooldownAsync(ctx);
                         return;
                     }
@@ -1399,16 +1400,18 @@ namespace LemixDiscordMusikBot.Commands
                 SendNotInAVoiceChannelAsync(ctx);
                 return;
             }
+           
 
             if (!BotChannels.ContainsKey(GuildId))
             {
                 SendNeedSetupAsync(ctx);
                 return;
             }
+            
 
             if (VoiceConnections.TryGetValue(GuildId, out VoiceConnection))
             {
-                if(vc != VoiceConnection.Channel)
+                if (vc != VoiceConnection.Channel)
                 {
                     var chn1 = ctx.Guild.GetChannel(BotChannels[GuildId]);
                     var MainMsg = await chn1.GetMessageAsync(BotChannelMainMessages[GuildId]);
@@ -1422,14 +1425,17 @@ namespace LemixDiscordMusikBot.Commands
                 }
             } 
             else
-            { 
+            {
+
                 VoiceConnection = await this.Lavalink.ConnectAsync(vc);
+ 
                 VoiceConnections.Add(GuildId, VoiceConnection);
+    
                 if (!Volumes.ContainsKey(VoiceConnection))
                     Volumes.Add(VoiceConnection, configJson.DefaultVolume);
                 else
                     Volumes[VoiceConnection] = configJson.DefaultVolume;
-                
+              
                 if (!AFKTimeOffsets.ContainsKey(GuildId))
                     AFKTimeOffsets.Add(GuildId, new DateTimeOffset());
                 else
@@ -3504,7 +3510,7 @@ namespace LemixDiscordMusikBot.Commands
             }*/
 
         [Command("setdj"), Description("3Set a Role as DJ")]
-        public async Task SetDjAsync(CommandContext ctx, [Description("Role Name")]String RoleName)
+        public async Task SetDjAsync(CommandContext ctx, [Description("@Role Name")]String RoleName)
         {
             if (!DeletePool.ContainsKey(ctx.Message.Id))
                 DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
@@ -3519,7 +3525,7 @@ namespace LemixDiscordMusikBot.Commands
             DiscordRole Role = null;
             foreach (KeyValuePair<ulong, DiscordRole> entry in ctx.Guild.Roles)
             {
-                if(entry.Value.Name == RoleName)
+                if(entry.Value.Name == RoleName.Replace("@", ""))
                 {
                     Role = entry.Value;
                     break;
@@ -3583,7 +3589,7 @@ namespace LemixDiscordMusikBot.Commands
 
         }
         [Command("removedj"), Description("3Set a Role as DJ"), Aliases("remdj")]
-        public async Task RemoveDjAsync(CommandContext ctx, [Description("Role Name")] String RoleName)
+        public async Task RemoveDjAsync(CommandContext ctx, [Description("@Role Name")] String RoleName)
         {
             if (!DeletePool.ContainsKey(ctx.Message.Id))
                 DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
@@ -3598,7 +3604,7 @@ namespace LemixDiscordMusikBot.Commands
             DiscordRole Role = null;
             foreach (KeyValuePair<ulong, DiscordRole> entry in ctx.Guild.Roles)
             {
-                if (entry.Value.Name == RoleName)
+                if (entry.Value.Name == RoleName.Replace("@", ""))
                 {
                     Role = entry.Value;
                     break;
@@ -3702,7 +3708,7 @@ namespace LemixDiscordMusikBot.Commands
 
         }
         [Command("setadmin"), Description("3Set a Role as Admin")]
-        public async Task SetAdminAsync(CommandContext ctx, [Description("Role Name")] String RoleName)
+        public async Task SetAdminAsync(CommandContext ctx, [Description("@Role Name")] String RoleName)
         {
             if (!DeletePool.ContainsKey(ctx.Message.Id))
                 DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
@@ -3717,7 +3723,7 @@ namespace LemixDiscordMusikBot.Commands
             DiscordRole Role = null;
             foreach (KeyValuePair<ulong, DiscordRole> entry in ctx.Guild.Roles)
             {
-                if (entry.Value.Name == RoleName)
+                if (entry.Value.Name == RoleName.Replace("@", ""))
                 {
                     Role = entry.Value;
                     break;
@@ -3782,7 +3788,7 @@ namespace LemixDiscordMusikBot.Commands
 
         }
         [Command("removeadmin"), Description("3Set a Role as DJ"), Aliases("remadmin")]
-        public async Task RemoveAdminAsync(CommandContext ctx, [Description("Role Name")] String RoleName)
+        public async Task RemoveAdminAsync(CommandContext ctx, [Description("@Role Name")] String RoleName)
         {
             if (!DeletePool.ContainsKey(ctx.Message.Id))
                 DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
@@ -3797,7 +3803,7 @@ namespace LemixDiscordMusikBot.Commands
             DiscordRole Role = null;
             foreach (KeyValuePair<ulong, DiscordRole> entry in ctx.Guild.Roles)
             {
-                if (entry.Value.Name == RoleName)
+                if (entry.Value.Name == RoleName.Replace("@", ""))
                 {
                     Role = entry.Value;
                     break;
@@ -4000,6 +4006,8 @@ namespace LemixDiscordMusikBot.Commands
 
                 DeletePool.Add(setnew.Id, new DeleteMessage(ctx.Channel, setnew));
                 var success = await ctx.Channel.SendMessageAsync(embed: PrefixNewSuccessEmbed);
+                var MainMsg = await ctx.Channel.GetMessageAsync(BotChannelMainMessages[ctx.Guild.Id]);
+                await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, Footer: $"Prefix for this Server is: {newprefix}");
                 await Task.Delay(5000);
                 DeletePool.Add(success.Id, new DeleteMessage(ctx.Channel, success));
             }
@@ -4605,6 +4613,7 @@ namespace LemixDiscordMusikBot.Commands
             {
                 if (Cooldown[GuildId])
                 {
+                    
                     return true;
                 }
                 else
