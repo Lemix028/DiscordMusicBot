@@ -178,7 +178,6 @@ namespace LemixDiscordMusikBot
             }
 
             e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
-            Console.WriteLine(e.Exception.StackTrace);
             if (e.Exception is ChecksFailedException)
             {
 

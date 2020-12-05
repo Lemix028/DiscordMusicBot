@@ -378,8 +378,6 @@ namespace LemixDiscordMusikBot.Commands
 
         //Add all messages in Botchannel for delete
         private Task OnMessageCreated(DiscordClient s, MessageCreateEventArgs e) {
-            if (e.Guild == null)
-                return Task.CompletedTask;
             if(e.Guild != null)
             {
                 if (!BotChannels.ContainsKey(e.Guild.Id))
@@ -387,10 +385,10 @@ namespace LemixDiscordMusikBot.Commands
             } else
             {
                 s.Logger.LogDebug(new EventId(8898), "Guild is null");
+                return Task.CompletedTask;
             }
               
-            if (e.Guild != null)
-                if (e.Author.Id == s.CurrentUser.Id || e.Channel.Id != BotChannels[e.Guild.Id])
+            if (e.Author.Id == s.CurrentUser.Id || e.Channel.Id != BotChannels[e.Guild.Id])
                 return Task.CompletedTask;
             if(!DeletePool.ContainsKey(e.Message.Id))
                 DeletePool.Add(e.Message.Id, new DeleteMessage(e.Channel, e.Message));
@@ -3910,7 +3908,7 @@ namespace LemixDiscordMusikBot.Commands
 
         }
 
-        [Command("prefix")]
+        [Command("prefix"), Description("3Get and sets the Prefix.")]
         public async Task PrefixAsync(CommandContext ctx)
         {
             if (!DeletePool.ContainsKey(ctx.Message.Id))
@@ -3961,8 +3959,10 @@ namespace LemixDiscordMusikBot.Commands
             InteractivityResult<MessageReactionAddEventArgs> firstresult = await ctx.Client.GetInteractivity().WaitForReactionAsync(x => x.Message == PrefixFirstMsg && x.User != ctx.Client.CurrentUser);
             if (firstresult.TimedOut)
             {
-                await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
-                await PrefixFirstMsg.DeleteAsync();
+                DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
+                var abort = await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
+                await Task.Delay(5000);
+                DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
                 return;
             }
 
@@ -3970,18 +3970,21 @@ namespace LemixDiscordMusikBot.Commands
 
             if (firstresult.Result.Emoji == SetNewEmoji)
             {
-                //await PrefixFirstMsg.DeleteAsync();
+                DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
                 var PrefixSetNewEmbed = new DiscordEmbedBuilder
                 {
                     Title = "Set new prefix!",
                     Description = "Please write the new prefix below.\nOnly one letter or special char!",
                     Color = DiscordColor.DarkGreen
                 };
-                await ctx.Channel.SendMessageAsync(embed: PrefixSetNewEmbed);
+                var setnew = await ctx.Channel.SendMessageAsync(embed: PrefixSetNewEmbed);
                 InteractivityResult<DiscordMessage> newprefixresult = await ctx.Client.GetInteractivity().WaitForMessageAsync(x => x.Author == firstresult.Result.User);
                 if (newprefixresult.TimedOut)
                 {
-                    await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
+                    DeletePool.Add(setnew.Id, new DeleteMessage(ctx.Channel, setnew));
+                    var abort = await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
+                    await Task.Delay(5000);
+                    DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
                     return;
                 }
                 string newprefix = newprefixresult.Result.Content.ToCharArray().First().ToString();
@@ -3995,15 +3998,18 @@ namespace LemixDiscordMusikBot.Commands
 
                 db.Execute($"UPDATE data SET Prefix = '{newprefix}' WHERE GuildId IN ({ctx.Guild.Id})");
 
-
-                await ctx.Channel.SendMessageAsync(embed: PrefixNewSuccessEmbed);
-
+                DeletePool.Add(setnew.Id, new DeleteMessage(ctx.Channel, setnew));
+                var success = await ctx.Channel.SendMessageAsync(embed: PrefixNewSuccessEmbed);
+                await Task.Delay(5000);
+                DeletePool.Add(success.Id, new DeleteMessage(ctx.Channel, success));
             }
 
             if (firstresult.Result.Emoji == Crossed)
             {
-                await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
-                await PrefixFirstMsg.DeleteAsync();
+                DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
+                var abort = await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
+                await Task.Delay(5000);
+                DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
                 return;
             }
 
@@ -4197,7 +4203,7 @@ namespace LemixDiscordMusikBot.Commands
             DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
-        // [RequireOwner]
+        
         [Command("stats"), Description("4Developer Command.")]
         public async Task StatsAsync(CommandContext ctx)
         {
