@@ -528,8 +528,6 @@ namespace LemixDiscordMusikBot.Commands
                 }
                 else
                 {
-                    Console.WriteLine("11");
-                    Console.WriteLine(GuildId);
                     try { BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]); } catch { return; }
                    
                 }
