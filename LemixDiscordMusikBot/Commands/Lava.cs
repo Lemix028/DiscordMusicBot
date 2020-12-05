@@ -528,6 +528,7 @@ namespace LemixDiscordMusikBot.Commands
                 }
                 else
                 {
+                    Console.WriteLine(chn.Guild.Name);
                     try { BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]); } catch { return; }
                    
                 }
@@ -821,6 +822,7 @@ namespace LemixDiscordMusikBot.Commands
             }
             catch (Exception e)
             {
+
                 ctx.Client.Logger.LogCritical(new EventId(7780, "Botchannel"), e.ToString());
             }
         }
@@ -1903,7 +1905,7 @@ namespace LemixDiscordMusikBot.Commands
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                ctx.Client.Logger.LogError(new EventId(7780, "play"), e.Message);
                 
             }
 
