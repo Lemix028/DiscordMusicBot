@@ -528,7 +528,8 @@ namespace LemixDiscordMusikBot.Commands
                 }
                 else
                 {
-                    BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]);
+                    try { BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]); } catch { return; }
+                   
                 }
 
                 if (!BotChannelMainMessages.ContainsKey(GuildId))
