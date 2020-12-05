@@ -528,7 +528,7 @@ namespace LemixDiscordMusikBot.Commands
                 }
                 else
                 {
-                    Console.WriteLine(chn.Guild.Name);
+                    Console.WriteLine(GuildId);
                     try { BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]); } catch { return; }
                    
                 }
