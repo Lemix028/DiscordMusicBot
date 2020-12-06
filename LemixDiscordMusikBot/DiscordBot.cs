@@ -87,15 +87,13 @@ namespace LemixDiscordMusikBot
                 TokenType = TokenType.Bot,
                 AutoReconnect = true,
                 LogTimestampFormat = "dd-MM-yyyy HH:mm:ss",
-                MinimumLogLevel = LogLevel.Debug
-
-
+                MinimumLogLevel = LogLevel.Debug,
+                Intents = DiscordIntents.All,
+                ShardCount = 1
 
             };
             Client = new DiscordShardedClient(dconfig);
-
             db = new DBConnection(Client.Logger, configJson);
-
             Client.Ready += async (s, e) => { await OnClientReady(s, e); };
             Client.GuildCreated += async (s, e) => { await OnGuildCreated(s, e); };
             Client.GuildAvailable += async (s, e) => { await OnGuildAvailable(s, e); };
@@ -112,14 +110,11 @@ namespace LemixDiscordMusikBot
                 PrefixResolver = ResolvePrefixAsync,
                 EnableMentionPrefix = true,
                 EnableDefaultHelp = false
-
-
             };
             CommandsTask = await Client.UseCommandsNextAsync(commandsConfig);
             foreach (KeyValuePair<int, CommandsNextExtension> entry in CommandsTask)
             {
                 var cmd = entry.Value;
-
                 cmd.RegisterCommands<Lava>();
                 cmd.CommandExecuted += async (s, e) => { await OnCommandExecuted(s, e); }; ;
                 cmd.CommandErrored += async (s, e) => { await OnCommandError(s, e); }; ;
@@ -133,16 +128,17 @@ namespace LemixDiscordMusikBot
             await Client.UseInteractivityAsync(icfg);
 
 
+
+            await Client.StartAsync().ConfigureAwait(false);
             LavalinkConfiguration lcfg = new LavalinkConfiguration
             {
                 SocketEndpoint = new ConnectionEndpoint(configJson.LavalinkServerIP, configJson.LavalinkServerPort),
                 RestEndpoint = new ConnectionEndpoint(configJson.LavalinkServerIP, configJson.LavalinkServerPort),
                 Password = configJson.LavalinkServerPassword
             };
-
-            await Client.StartAsync().ConfigureAwait(false);
             Client.Logger.LogInformation(new EventId(7777, "LavalinkStartup"), $"Try to connect to {configJson.LavalinkServerIP}:{configJson.LavalinkServerPort}");
             var LavaTask = Client.UseLavalinkAsync();
+
             foreach (KeyValuePair<int, LavalinkExtension> entry in LavaTask.Result)
             {
                 var l = entry.Value;
@@ -172,12 +168,6 @@ namespace LemixDiscordMusikBot
 
         private async Task OnCommandError(CommandsNextExtension s, CommandErrorEventArgs e)
         {
-            if (e.Exception is ArgumentException && e.Context.RawArgumentString == String.Empty)
-            {
-                return;
-            }
-
-            e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
             if (e.Exception is ChecksFailedException)
             {
 
@@ -197,6 +187,13 @@ namespace LemixDiscordMusikBot
                 catch { }
 
             }
+            if (e.Exception is ArgumentException && e.Context.RawArgumentString == String.Empty)
+            {
+                return;
+            }
+
+            e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
+           
         }
 
         private Task OnCommandExecuted(CommandsNextExtension s, CommandExecutionEventArgs e)
@@ -207,7 +204,7 @@ namespace LemixDiscordMusikBot
 
         private Task OnClientError(DiscordClient s, ClientErrorEventArgs e)
         {
-            s.Logger.LogCritical(new EventId(7777, "ClientError"), $"Exception occured: {e.Exception.GetType()}: {e.Exception.Message}");
+            s.Logger.LogError(new EventId(7777, "ClientError"), $"Exception occured: {e.Exception.GetType()}: {e.EventName + "|" + e.Exception}");
             return Task.CompletedTask;
         }
         //GUILD COUNT 
@@ -302,8 +299,9 @@ namespace LemixDiscordMusikBot
 
         private async Task<Task> OnClientReady(DiscordClient s, ReadyEventArgs e)
         {
-            
-                try
+
+
+            try
                 {
                     try
                     {
@@ -349,6 +347,14 @@ namespace LemixDiscordMusikBot
                 };
                 BootedEmbed.WithFooter("Programmed by Lemix | Powered by DSharpPlus");
                 BootedEmbed.WithThumbnail(s.CurrentUser.AvatarUrl);
+
+                //foreach (KeyValuePair<int, DiscordClient> entry in Client.ShardClients)
+                //{
+                //    foreach (KeyValuePair<ulong, DiscordGuild> guild1 in entry.Value.Guilds)
+                //    {
+                //        await guild1.Value.Owner.SendMessageAsync("Hi");
+                //    }
+                //}
                 var msg = await chn.SendMessageAsync("", embed: BootedEmbed);
                 var ctx = CommandsTask.Values.First().CreateContext(msg, "!", CommandsTask.Values.First().RegisteredCommands.ToList().Find(x => x.Key.Equals("init", StringComparison.OrdinalIgnoreCase)).Value);
                 await CommandsTask.Values.First().ExecuteCommandAsync(ctx);
