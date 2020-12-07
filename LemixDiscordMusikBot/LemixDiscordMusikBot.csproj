@@ -60,7 +60,6 @@
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-rc1" />
     <PackageReference Include="DSharpPlus.Lavalink" Version="4.0.0-rc1" />
     <PackageReference Include="DSharpPlus.VoiceNext" Version="4.0.0-rc1" />
-    <PackageReference Include="Lavalink4NET.DSharpPlus" Version="1.6.2" />
     <PackageReference Include="MySql.Data" Version="8.0.22" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="5.0.0" />
     <PackageReference Include="System.Management" Version="5.0.0" />

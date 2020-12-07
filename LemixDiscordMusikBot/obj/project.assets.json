@@ -215,32 +215,6 @@
           "lib/netstandard2.0/K4os.Hash.xxHash.dll": {}
         }
       },
-      "Lavalink4NET/1.6.2": {
-        "type": "package",
-        "dependencies": {
-          "Newtonsoft.Json": "12.0.2",
-          "System.Buffers": "4.5.0"
-        },
-        "compile": {
-          "lib/netstandard2.0/Lavalink4NET.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.0/Lavalink4NET.dll": {}
-        }
-      },
-      "Lavalink4NET.DSharpPlus/1.6.2": {
-        "type": "package",
-        "dependencies": {
-          "DSharpPlus": "4.0.0-nightly-00748",
-          "Lavalink4NET": "1.6.2"
-        },
-        "compile": {
-          "lib/netstandard2.0/Lavalink4NET.DSharpPlus.dll": {}
-        },
-        "runtime": {
-          "lib/netstandard2.0/Lavalink4NET.DSharpPlus.dll": {}
-        }
-      },
       "Microsoft.CSharp/4.0.1": {
         "type": "package",
         "dependencies": {
@@ -2457,34 +2431,6 @@
         "lib/netstandard1.6/K4os.Hash.xxHash.xml",
         "lib/netstandard2.0/K4os.Hash.xxHash.dll",
         "lib/netstandard2.0/K4os.Hash.xxHash.xml"
-      ]
-    },
-    "Lavalink4NET/1.6.2": {
-      "sha512": "gCI7anWbZGKD0SYZPWINehlP0fUVJ02DBDiXkJdTzAzzBwCx5F+KNTDvRfNqTYsaikpydpaZt4Ci/y1F8NpYXg==",
-      "type": "package",
-      "path": "lavalink4net/1.6.2",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Lavalink4NET.png",
-        "lavalink4net.1.6.2.nupkg.sha512",
-        "lavalink4net.nuspec",
-        "lib/netstandard2.0/Lavalink4NET.dll",
-        "lib/netstandard2.0/Lavalink4NET.xml"
-      ]
-    },
-    "Lavalink4NET.DSharpPlus/1.6.2": {
-      "sha512": "eeZFVtiVnzO20/pPPRofBRkHP0siYkbeyC8/NbFXrKQqfqEPrfYV8UoNnxckVuodJtOP7giW/em464UI7hpOsw==",
-      "type": "package",
-      "path": "lavalink4net.dsharpplus/1.6.2",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Lavalink4NET.png",
-        "lavalink4net.dsharpplus.1.6.2.nupkg.sha512",
-        "lavalink4net.dsharpplus.nuspec",
-        "lib/netstandard2.0/Lavalink4NET.DSharpPlus.dll",
-        "lib/netstandard2.0/Lavalink4NET.DSharpPlus.xml"
       ]
     },
     "Microsoft.CSharp/4.0.1": {
@@ -7137,7 +7083,6 @@
       "DSharpPlus.Interactivity >= 4.0.0-rc1",
       "DSharpPlus.Lavalink >= 4.0.0-rc1",
       "DSharpPlus.VoiceNext >= 4.0.0-rc1",
-      "Lavalink4NET.DSharpPlus >= 1.6.2",
       "MySql.Data >= 8.0.22",
       "System.Diagnostics.PerformanceCounter >= 5.0.0",
       "System.Management >= 5.0.0"
@@ -7219,10 +7164,6 @@
           "DSharpPlus.VoiceNext": {
             "target": "Package",
             "version": "[4.0.0-rc1, )"
-          },
-          "Lavalink4NET.DSharpPlus": {
-            "target": "Package",
-            "version": "[1.6.2, )"
           },
           "MySql.Data": {
             "target": "Package",

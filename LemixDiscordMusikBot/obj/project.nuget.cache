@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "fRlx6mCz3SHLOSVuxhoZfrPLIh4pGxtoF/CQ0w4tYJCBzSfrZltZXYJI6qoZGaycfZo8qe74Ju97sblKeeQxkg==",
+  "dgSpecHash": "hIsQjAll4chMeu7w9sd5iLE68yHE7XRaurHwzCzjMQcfbpkppKqLhy14TWXHwka4R+u4ibSwUqKN95t5nwRXig==",
   "success": true,
   "projectFilePath": "C:\\Users\\Marvin\\source\\repos\\LemixDiscordMusikBot\\LemixDiscordMusikBot\\LemixDiscordMusikBot.csproj",
   "expectedPackageFiles": [
@@ -20,8 +20,6 @@
     "C:\\Users\\Marvin\\.nuget\\packages\\k4os.compression.lz4\\1.1.11\\k4os.compression.lz4.1.1.11.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\k4os.compression.lz4.streams\\1.1.11\\k4os.compression.lz4.streams.1.1.11.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\k4os.hash.xxhash\\1.0.6\\k4os.hash.xxhash.1.0.6.nupkg.sha512",
-    "C:\\Users\\Marvin\\.nuget\\packages\\lavalink4net\\1.6.2\\lavalink4net.1.6.2.nupkg.sha512",
-    "C:\\Users\\Marvin\\.nuget\\packages\\lavalink4net.dsharpplus\\1.6.2\\lavalink4net.dsharpplus.1.6.2.nupkg.sha512",
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder\\microsoft.csharp\\4.0.1\\microsoft.csharp.4.0.1.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\3.1.7\\microsoft.extensions.dependencyinjection.3.1.7.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\3.1.7\\microsoft.extensions.dependencyinjection.abstractions.3.1.7.nupkg.sha512",

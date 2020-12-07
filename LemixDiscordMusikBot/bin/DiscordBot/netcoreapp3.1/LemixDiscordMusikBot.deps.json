@@ -30,7 +30,6 @@
           "DSharpPlus.Interactivity": "4.0.0-rc1",
           "DSharpPlus.Lavalink": "4.0.0-rc1",
           "DSharpPlus.VoiceNext": "4.0.0-rc1",
-          "Lavalink4NET.DSharpPlus": "1.6.2",
           "MySql.Data": "8.0.22",
           "System.Diagnostics.PerformanceCounter": "5.0.0",
           "System.Management": "5.0.0",
@@ -547,36 +546,6 @@
         },
         "compile": {
           "lib/netstandard2.0/K4os.Hash.xxHash.dll": {}
-        }
-      },
-      "Lavalink4NET/1.6.2": {
-        "dependencies": {
-          "Newtonsoft.Json": "12.0.3",
-          "System.Buffers": "4.5.1"
-        },
-        "runtime": {
-          "lib/netstandard2.0/Lavalink4NET.dll": {
-            "assemblyVersion": "1.6.2.0",
-            "fileVersion": "1.6.2.0"
-          }
-        },
-        "compile": {
-          "lib/netstandard2.0/Lavalink4NET.dll": {}
-        }
-      },
-      "Lavalink4NET.DSharpPlus/1.6.2": {
-        "dependencies": {
-          "DSharpPlus": "4.0.0-rc1",
-          "Lavalink4NET": "1.6.2"
-        },
-        "runtime": {
-          "lib/netstandard2.0/Lavalink4NET.DSharpPlus.dll": {
-            "assemblyVersion": "1.6.2.0",
-            "fileVersion": "1.6.2.0"
-          }
-        },
-        "compile": {
-          "lib/netstandard2.0/Lavalink4NET.DSharpPlus.dll": {}
         }
       },
       "Microsoft.CSharp/4.0.1": {
@@ -3633,20 +3602,6 @@
       "sha512": "sha512-jCfNP0inx1sGcP3KSbpiDEH3km2e1sVBjMfKo+V92jr1dL4ZYgA1uhRMl1wAtdGZcbObXIikKqtVlgx3j/CW6g==",
       "path": "k4os.hash.xxhash/1.0.6",
       "hashPath": "k4os.hash.xxhash.1.0.6.nupkg.sha512"
-    },
-    "Lavalink4NET/1.6.2": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-gCI7anWbZGKD0SYZPWINehlP0fUVJ02DBDiXkJdTzAzzBwCx5F+KNTDvRfNqTYsaikpydpaZt4Ci/y1F8NpYXg==",
-      "path": "lavalink4net/1.6.2",
-      "hashPath": "lavalink4net.1.6.2.nupkg.sha512"
-    },
-    "Lavalink4NET.DSharpPlus/1.6.2": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-eeZFVtiVnzO20/pPPRofBRkHP0siYkbeyC8/NbFXrKQqfqEPrfYV8UoNnxckVuodJtOP7giW/em464UI7hpOsw==",
-      "path": "lavalink4net.dsharpplus/1.6.2",
-      "hashPath": "lavalink4net.dsharpplus.1.6.2.nupkg.sha512"
     },
     "Microsoft.CSharp/4.0.1": {
       "type": "package",

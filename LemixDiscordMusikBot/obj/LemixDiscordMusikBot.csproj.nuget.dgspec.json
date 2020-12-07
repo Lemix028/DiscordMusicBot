@@ -76,10 +76,6 @@
               "target": "Package",
               "version": "[4.0.0-rc1, )"
             },
-            "Lavalink4NET.DSharpPlus": {
-              "target": "Package",
-              "version": "[1.6.2, )"
-            },
             "MySql.Data": {
               "target": "Package",
               "version": "[8.0.22, )"
