@@ -26,7 +26,7 @@ using System.Diagnostics;
 using System.Management;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
-
+using DSharpPlus.Interactivity.Extensions;
 
 namespace LemixDiscordMusikBot.Commands
 {
@@ -735,7 +735,7 @@ namespace LemixDiscordMusikBot.Commands
                         {
                             if (entry.Identifier == track.Identifier)
                             {
-                                var errmsg = await chn.SendMessageAsync("Bereits Favorite.");
+                                var errmsg = await chn.SendMessageAsync("Already favorite.");
                                 DeletePool.Add(errmsg.Id, new DeleteMessage(chn, errmsg));
                                 abort = true;
                             }
@@ -743,7 +743,7 @@ namespace LemixDiscordMusikBot.Commands
                         if (abort)
                             continue;
                         FavoritesTracksLists[GuildId].Add(track);
-                        var msg = await chn.SendMessageAsync("Erfolgreich hinzugefügt.");
+                        var msg = await chn.SendMessageAsync("Successfully added.");
                         DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
                         await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, $"Playing `{track.Title}`", ImageUrl: getThumbnail(track), Footer: $"{getQueueCount(GuildId)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(GuildId)}{GetFavoriteMessage(GuildId, track)}");
 
@@ -766,7 +766,7 @@ namespace LemixDiscordMusikBot.Commands
                             if (entry.Identifier == track.Identifier)
                             {
                                 FavoritesTracksLists[GuildId].Remove(entry);
-                                var msg = await chn.SendMessageAsync("Erfolgreich entfernt.");
+                                var msg = await chn.SendMessageAsync("Successfully removed.");
 
                                 DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
                                 await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, $"Playing `{track.Title}`", ImageUrl: getThumbnail(track), Footer: $"{getQueueCount(GuildId)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetFavoriteMessage(GuildId, track)}");
@@ -775,7 +775,7 @@ namespace LemixDiscordMusikBot.Commands
                         }
                         if (abort)
                             continue;
-                        var errmsg = await chn.SendMessageAsync("Nicht bei Favoriten.");
+                        var errmsg = await chn.SendMessageAsync("Not at favorites.");
                         DeletePool.Add(errmsg.Id, new DeleteMessage(chn, errmsg));
 
 
@@ -1738,7 +1738,7 @@ namespace LemixDiscordMusikBot.Commands
                 {
                     var track = trackLoad.Tracks.First();
                     await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, $"Playing `{track.Title}`", ImageUrl: getThumbnail(track), Footer: $"{getQueueCount(ctx.Guild.Id)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(ctx.Guild.Id)}{GetFavoriteMessage(ctx.Guild.Id, track)}");
-
+                    
                     await VoiceConnection.PlayAsync(TrackLoadPlaylists[ctx.Guild.Id].First());
                     /*
                     if (AnnounceStates[ctx.Guild.Id] == true)
@@ -4259,7 +4259,6 @@ namespace LemixDiscordMusikBot.Commands
             DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
-
         [Command("help")]
         public async Task HelpAsync(CommandContext ctx, String Command)
         {
@@ -4389,20 +4388,55 @@ namespace LemixDiscordMusikBot.Commands
             DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
+
+        // !sendglobalmsg "Title" "TEXT" "color code without #" "footer text"
         [Command("sendglobalmsg"), Description("4")]
-        public async Task SendGlobalMessageAsync(CommandContext ctx)
+        public async Task SendGlobalMessageAsync(CommandContext ctx, string Title, string Description, string Color, string Footer)
         {
 
+            if (!DeletePool.ContainsKey(ctx.Message.Id))
+                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
+            {
+                foreach(KeyValuePair<ulong, DiscordGuild> guild in ctx.Client.Guilds)
+                {
+                    var embed = new DiscordEmbedBuilder()
+                    {
+                        Title = Title,
+                        Description = Description
+                    };
+                    embed.WithThumbnail(ctx.Client.CurrentUser.AvatarUrl);
+                    embed.WithColor(new DiscordColor(Color));
+                    embed.WithFooter(Footer);
+                    await guild.Value.Owner.SendMessageAsync(embed: embed);
+                }
+            }
+
+        }
+
+        // !sendglobalmsg "Title" "TEXT" "color code without #" "footer text"
+        [Command("sendglobalmsgtest"), Description("4")]
+        public async Task SendGlobalMessageTestAsync(CommandContext ctx, string Title, string Description, string Color, string Footer)
+        {
 
             if (!DeletePool.ContainsKey(ctx.Message.Id))
                 DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
               
+                var embed = new DiscordEmbedBuilder()
+                {
+                    Title = Title,
+                    Description = Description
+                };
+                embed.WithThumbnail(ctx.Client.CurrentUser.AvatarUrl);
+                embed.WithColor(new DiscordColor(Color));
+                embed.WithFooter(Footer);
+                await ctx.Member.SendMessageAsync($"USAGE: {ctx.Prefix}{ctx.Command.Name} \"Title\" \"Text\" \"Colorcode without # (HexCode)\" \"FooterText\" ",embed: embed);
+              
             }
 
         }
-
 
         [Command("stats"), Description("4Developer Command.")]
         public async Task StatsAsync(CommandContext ctx)
@@ -4534,7 +4568,7 @@ namespace LemixDiscordMusikBot.Commands
         public void SaveJsonToDatabase()
         {
             String contentsToWriteToFile = JsonConvert.SerializeObject(getLavaVariablesObject());
-            db.Execute(@$"UPDATE guilds SET JSON='{contentsToWriteToFile}' WHERE ID = 1;");
+            db.Execute(@$"UPDATE guilds SET JSON='{contentsToWriteToFile.Replace("'", "")}' WHERE ID = 1;");
         }
         public LavaVariables ReadFromJsonFile()
         {

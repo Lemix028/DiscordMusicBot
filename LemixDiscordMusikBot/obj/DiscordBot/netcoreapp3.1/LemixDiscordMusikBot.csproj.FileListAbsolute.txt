@@ -72,3 +72,6 @@ C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\Disco
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.csproj.Fody.CopyLocal.cache
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\scopedcss\bundle\LemixDiscordMusikBot.styles.css
+C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\ConcurrentCollections.dll
+C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\Lavalink4NET.dll
+C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\Lavalink4NET.DSharpPlus.dll

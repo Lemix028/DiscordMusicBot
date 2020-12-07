@@ -48,7 +48,7 @@
           "dependencies": {
             "AngleSharp": {
               "target": "Package",
-              "version": "[1.0.0-alpha-827, )"
+              "version": "[1.0.0-alpha-844, )"
             },
             "Costura.Fody": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -58,35 +58,39 @@
             },
             "DSharpPlus": {
               "target": "Package",
-              "version": "[4.0.0-nightly-00737, )"
+              "version": "[4.0.0-rc1, )"
             },
             "DSharpPlus.CommandsNext": {
               "target": "Package",
-              "version": "[4.0.0-nightly-00737, )"
+              "version": "[4.0.0-rc1, )"
             },
             "DSharpPlus.Interactivity": {
               "target": "Package",
-              "version": "[4.0.0-nightly-00737, )"
+              "version": "[4.0.0-rc1, )"
             },
             "DSharpPlus.Lavalink": {
               "target": "Package",
-              "version": "[4.0.0-nightly-00737, )"
+              "version": "[4.0.0-rc1, )"
             },
             "DSharpPlus.VoiceNext": {
               "target": "Package",
-              "version": "[4.0.0-nightly-00737, )"
+              "version": "[4.0.0-rc1, )"
+            },
+            "Lavalink4NET.DSharpPlus": {
+              "target": "Package",
+              "version": "[1.6.2, )"
             },
             "MySql.Data": {
               "target": "Package",
-              "version": "[8.0.21, )"
+              "version": "[8.0.22, )"
             },
             "System.Diagnostics.PerformanceCounter": {
               "target": "Package",
-              "version": "[5.0.0-rc.2.20475.5, )"
+              "version": "[5.0.0, )"
             },
             "System.Management": {
               "target": "Package",
-              "version": "[5.0.0-rc.2.20475.5, )"
+              "version": "[5.0.0, )"
             }
           },
           "imports": [

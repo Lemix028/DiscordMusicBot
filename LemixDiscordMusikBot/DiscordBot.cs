@@ -17,6 +17,7 @@ using DSharpPlus.Interactivity;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using DSharpPlus.Interactivity.Extensions;
 
 namespace LemixDiscordMusikBot
 {
@@ -138,6 +139,8 @@ namespace LemixDiscordMusikBot
             };
             Client.Logger.LogInformation(new EventId(7777, "LavalinkStartup"), $"Try to connect to {configJson.LavalinkServerIP}:{configJson.LavalinkServerPort}");
             var LavaTask = Client.UseLavalinkAsync();
+
+
 
             foreach (KeyValuePair<int, LavalinkExtension> entry in LavaTask.Result)
             {
