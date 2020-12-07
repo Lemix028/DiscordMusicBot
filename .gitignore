@@ -139,6 +139,9 @@ _TeamCity*
 *.coverage
 *.coveragexml
 
+config.json
+LemixDiscordMusikBot/bin/DiscordBot/netcoreapp3.1/config.json
+
 # NCrunch
 _NCrunch_*
 .*crunch*.local.xml
