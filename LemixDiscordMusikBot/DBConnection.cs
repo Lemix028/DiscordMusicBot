@@ -101,16 +101,16 @@ namespace LemixDiscordMusikBot
                         logger.LogDebug(new EventId(7777, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\"");   
                     else
                         logger.LogDebug(new EventId(7777, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\" affected {rowsaffected} rows");
-                    this.Disconnect();
+                    
                 }
                 catch(Exception e)
                 {
                     logger.LogCritical(new EventId(7777, "Database"), $"Sql query errored {e.Message}");
                 }
 
+                this.Disconnect();
 
 
-               
             }
 
         }
