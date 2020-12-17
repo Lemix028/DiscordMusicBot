@@ -4441,9 +4441,9 @@ namespace LemixDiscordMusikBot.Commands
         [Command("stats"), Description("4Developer Command.")]
         public async Task StatsAsync(CommandContext ctx)
         {
-         
-            
-            DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
+            if (!DeletePool.ContainsKey(ctx.Message.Id))
+                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
                 ctx.Client.Logger.LogInformation(new EventId(7700, "StatsCmd"), $"{ctx.Member.DisplayName} [{ctx.Member.Id}] executed Stats Command!");
@@ -4494,8 +4494,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("guildlist"), Description("4Developer Command.")]
         public async Task GuildListAsync(CommandContext ctx)
         {
-
-            DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            if (!DeletePool.ContainsKey(ctx.Message.Id))
+                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
                 ctx.Client.Logger.LogInformation(new EventId(7700, "StatsCmd"), $"{ctx.Member.DisplayName} [{ctx.Member.Id}] executed Guildlist Command!");
