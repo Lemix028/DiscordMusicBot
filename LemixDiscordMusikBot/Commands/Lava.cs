@@ -3565,7 +3565,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("equalizer"), Description("2Resets equalizer settings.|Sets equalizer settings."), Aliases("eq")]
         public async Task EqualizerAsync(CommandContext ctx)
         {
-
+            if (!DeletePool.ContainsKey(ctx.Message.Id))
+                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
             if (CheckHasCooldown(ctx))
@@ -3581,12 +3582,16 @@ namespace LemixDiscordMusikBot.Commands
                 return;
             }
             await VoiceConnection.ResetEqualizerAsync();
-            await ctx.RespondAsync("All equalizer bands were reset.").ConfigureAwait(false);
+            
+            var eqmsg = await ctx.RespondAsync("All equalizer bands were reset.").ConfigureAwait(false);
+            DeletePool.Add(eqmsg.Id, new DeleteMessage(eqmsg.Channel, eqmsg));
         }
 
         [Command("equalizer")]
         public async Task EqualizerAsync(CommandContext ctx, int Band, float Gain)
         {
+            if (!DeletePool.ContainsKey(ctx.Message.Id))
+                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
             if (CheckHasCooldown(ctx))
@@ -3603,7 +3608,8 @@ namespace LemixDiscordMusikBot.Commands
             }
             await VoiceConnection.AdjustEqualizerAsync(new LavalinkBandAdjustment(Band, Gain));
             
-            await ctx.RespondAsync($"Band {Band} adjusted by {Gain}").ConfigureAwait(false);
+            var eqmsg = await ctx.RespondAsync($"Band {Band} adjusted by {Gain}").ConfigureAwait(false);
+            DeletePool.Add(eqmsg.Id, new DeleteMessage(eqmsg.Channel, eqmsg));
         }
 
         /*    [Command("prefix")]
