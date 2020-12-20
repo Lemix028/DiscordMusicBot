@@ -4413,10 +4413,24 @@ namespace LemixDiscordMusikBot.Commands
 
             if (!DeletePool.ContainsKey(ctx.Message.Id))
                 DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+           
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
-                foreach(KeyValuePair<ulong, DiscordGuild> guild in ctx.Client.Guilds)
+                DiscordMessage gm;
+                int i = 0;
+                DiscordEmbedBuilder GlobalMsgEmbed = new DiscordEmbedBuilder
                 {
+                    Title = "Global messages are sent!",
+                    Description = "Please wait this process takes some time.",
+                    Color = DiscordColor.Yellow
+                };
+                GlobalMsgEmbed.AddField("Total Guilds", ctx.Client.Guilds.Count.ToString());
+                GlobalMsgEmbed.WithFooter("This process can no longer be stopped");
+                gm = await ctx.RespondAsync(embed: GlobalMsgEmbed);
+                foreach (KeyValuePair<ulong, DiscordGuild> guild in ctx.Client.Guilds)
+                {
+                    i++;
+
                     var embed = new DiscordEmbedBuilder()
                     {
                         Title = Title,
@@ -4424,9 +4438,22 @@ namespace LemixDiscordMusikBot.Commands
                     };
                     embed.WithThumbnail(ctx.Client.CurrentUser.AvatarUrl);
                     embed.WithColor(new DiscordColor(Color));
-                    embed.WithFooter(Footer);
+                    embed.WithFooter(Footer); 
                     await guild.Value.Owner.SendMessageAsync(embed: embed);
+                    ctx.Client.Logger.LogInformation(new EventId(7879, "SendGlobalmsg"), $"Message sent to {guild.Value.Name} Owner ({i} out of {ctx.Client.Guilds.Count})");
+                    await Task.Delay(1000);
                 }
+                DiscordEmbedBuilder GlobalMsgFinishedEmbed = new DiscordEmbedBuilder
+                {
+                    Title = "Global messages was sent!",
+                    Description = $"{ctx.Client.Guilds.Count} messages was sent.",
+                    Color = DiscordColor.Green
+                };
+                var gmf = await ctx.RespondAsync(embed: GlobalMsgFinishedEmbed);
+                DeletePool.Add(gm.Id, new DeleteMessage(gm.Channel, gm));
+                await Task.Delay(10000);
+                DeletePool.Add(gmf.Id, new DeleteMessage(gmf.Channel, gmf));
+                
             }
 
         }
