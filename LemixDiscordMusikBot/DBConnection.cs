@@ -58,13 +58,20 @@ namespace LemixDiscordMusikBot
             try
             {
                 if (conn.State != ConnectionState.Open)
+                {
                     conn.Open();
+                }
+                else
+                {
+                    conn.Close();
+                    conn.Open();
+                }  
                 return true;
             }
             catch (MySqlException ex)
             {
 
-                logger.LogCritical(new EventId(7777, "Database"), $"{ex.Message}");
+                logger.LogCritical(new EventId(7772, "Database"), $"{ex.Message}");
                 Environment.Exit(0);
                 return false;
 
@@ -81,7 +88,7 @@ namespace LemixDiscordMusikBot
             }
             catch (MySqlException ex)
             {
-                logger.LogCritical(new EventId(7777, "Database"), $"{ex.Message}");
+                logger.LogCritical(new EventId(7773, "Database"), $"{ex.Message}");
                 Environment.Exit(0);
                 return false;
             }
@@ -98,9 +105,9 @@ namespace LemixDiscordMusikBot
                     MySqlCommand cmd = new MySqlCommand(query, conn);
                     var rowsaffected = cmd.ExecuteNonQuery();
                     if (rowsaffected == -1)
-                        logger.LogDebug(new EventId(7777, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\"");   
+                        logger.LogDebug(new EventId(7778, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\"");   
                     else
-                        logger.LogDebug(new EventId(7777, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\" affected {rowsaffected} rows");
+                        logger.LogDebug(new EventId(7778, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\" affected {rowsaffected} rows");
                     
                 }
                 catch(Exception e)
@@ -122,7 +129,7 @@ namespace LemixDiscordMusikBot
                 {
                     MySqlCommand cmd = new MySqlCommand(query, conn);
                     MySqlDataReader dataReader = cmd.ExecuteReader();
-                    logger.LogDebug(new EventId(7777, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\"");
+                    logger.LogDebug(new EventId(7779, "Database"), $"\"{Truncate(cmd.CommandText, 100)}\"");
                     return dataReader;
                     
                 }
