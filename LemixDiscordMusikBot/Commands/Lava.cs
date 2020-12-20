@@ -524,7 +524,8 @@ namespace LemixDiscordMusikBot.Commands
                             await reader.NextResultAsync();
                         }
                         await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, "No song playing currently", ImageUrl: configJson.NoSongPicture, Footer: $"Prefix for this Server is: {prefix}"); // PREFIX
-                        await VoiceConnection.DisconnectAsync();
+                        if(VoiceConnection.IsConnected)
+                            await VoiceConnection.DisconnectAsync();
                         VoiceConnections.Remove(e.Guild.Id);
                         Volumes.Remove(VoiceConnection);
                         AFKTimeOffsets.Remove(e.Guild.Id);
