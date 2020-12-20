@@ -1,10 +1,10 @@
-token --> Discord Bot API Token
-prefix --> obsolete
-StatusItems --> All status items
-    {0} --> Placeholder for guild count
-StatusRefreshTimer --> Refresh time in milliseconds (60000 is 1 minute)
-NoSongPicture --> URL of a picture
-DefaultVolume --> default volume (0-1000)
+- token --> Discord Bot API Token
+- prefix --> obsolete
+- StatusItems --> All status items
+    - {0} --> Placeholder for guild count
+- StatusRefreshTimer --> Refresh time in milliseconds (60000 is 1 minute)
+- NoSongPicture --> URL of a picture
+- DefaultVolume --> default volume (0-1000)
 
 
         StatusTypes:
