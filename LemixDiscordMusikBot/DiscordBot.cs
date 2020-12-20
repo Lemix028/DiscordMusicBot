@@ -370,7 +370,6 @@ namespace LemixDiscordMusikBot
                         StatusCount = 0;
                     entry = configJson.StatusItems[StatusCount];
                     StatusCount++;
-
                     await s.UpdateStatusAsync(new DiscordActivity($"{String.Format(entry.Text, GuildCount)}", entry.Activity), entry.StatusType);
 
                     i = GuildCount;

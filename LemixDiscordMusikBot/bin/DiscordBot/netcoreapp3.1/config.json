@@ -9,7 +9,7 @@
     "DatabaseUid": "root",
     "DatabasePassword": "dragona",
     "DatabasePort": 3306,
-    "StatusItems": [ {"Text":"auf {0} Servern | Made by Lemix","Activity":1,"StatusType":"dnd"}],
+    "StatusItems": [ {"Text":"auf {0} Servern | Made by Lemix","Activity": 1,"StatusType":"online"}],
     "StatusRefreshTimer" : 120000,
     "NoSongPicture" : "https://images-ext-1.discordapp.net/external/Y0Q-sqfVHVgTCK4PISibB52Y2BCXW3kSO3x8kqArf1c/https/64.media.tumblr.com/3c06dff2a35c4f2f46e1ee01322d44a6/tumblr_okt94f1Dis1s3abbdo1_500.gifv",
     "DefaultVolume" : 10
