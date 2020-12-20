@@ -105,7 +105,7 @@ namespace LemixDiscordMusikBot
                 }
                 catch(Exception e)
                 {
-                    logger.LogCritical(new EventId(7777, "Database"), $"Sql query errored {e.Message}");
+                    logger.LogCritical(new EventId(7778, "Database"), $"Sql query errored {e.Message} (statement: {query})");
                 }
 
                 this.Disconnect();
@@ -128,7 +128,7 @@ namespace LemixDiscordMusikBot
                 }
                 catch (Exception e)
                 {
-                    logger.LogCritical(new EventId(7777, "Database"), $"Sql query errored {e.Message}");
+                    logger.LogCritical(new EventId(7779, "Database"), $"Sql query errored {e.Message} (statement: {query})");
                 }
 
                 
