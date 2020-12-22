@@ -10,8 +10,9 @@
     <Product>Discord Music Bot</Product>
     <Copyright>Lemix</Copyright>
     <Company />
-    <AssemblyVersion>1.0.*</AssemblyVersion>
+    <AssemblyVersion>2.0.*</AssemblyVersion>
     <Deterministic>false</Deterministic>
+    <FileVersion>2.0.0.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

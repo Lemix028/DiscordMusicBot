@@ -289,7 +289,6 @@ namespace LemixDiscordMusikBot.Commands
 
             foreach (KeyValuePair<ulong, ulong> entry in BotChannels)
             {
-
                 await Task.Factory.StartNew(() => BotChannel(ctx, entry.Key));
             }
             var StatisticTimer = new Timer(1000);
@@ -423,6 +422,11 @@ namespace LemixDiscordMusikBot.Commands
                 Description = $"{e.Context.Message.Content}",
                 Color = DiscordColor.Gray
             };
+            var ArgumentCommandEmbed = new DiscordEmbedBuilder
+            {
+                Title = $"Could not find a suitable arguments for the command!",
+                Color = DiscordColor.Gray
+            };
             var UnkownEmbed = new DiscordEmbedBuilder
             {
                 Title = $"Unkown Error!",
@@ -432,6 +436,12 @@ namespace LemixDiscordMusikBot.Commands
             if (e.Exception is DSharpPlus.CommandsNext.Exceptions.CommandNotFoundException)
             {
                 var msg = await e.Context.Channel.SendMessageAsync(embed: UnkownCommandEmbed);
+                if (!DeletePool.ContainsKey(msg.Id))
+                    DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
+            }
+            else if (e.Exception is System.ArgumentException)
+            {
+                var msg = await e.Context.Channel.SendMessageAsync(embed: ArgumentCommandEmbed);
                 if (!DeletePool.ContainsKey(msg.Id))
                     DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
             }
@@ -554,7 +564,7 @@ namespace LemixDiscordMusikBot.Commands
                 var interactivity = ctx.Client.GetInteractivity();
                 DiscordMessage BannerMsg;
                 DiscordMessage MainMsg;
-                FileStream fs;
+             //   FileStream fs;
 
                 DiscordEmoji PlayPause = DiscordEmoji.FromName(ctx.Client, ":play_pause:");
                 DiscordEmoji Stop = DiscordEmoji.FromName(ctx.Client, ":stop_button:");
@@ -568,13 +578,29 @@ namespace LemixDiscordMusikBot.Commands
                 if (!BotChannelBannerMessages.ContainsKey(GuildId))
                 {
                     // Need final rework maybe integrated
-                    fs = File.OpenRead(System.Environment.CurrentDirectory + @"/pics/banner.png");
-                    BannerMsg = await chn.SendFileAsync(fs);
+                 //   fs = File.OpenRead(System.Environment.CurrentDirectory + @"/pics/banner.png");
+                    BannerMsg = await chn.SendMessageAsync(configJson.BannerPicture);
                     BotChannelBannerMessages.Add(GuildId, BannerMsg.Id);
                 }
                 else
                 {
-                    try { BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]); } catch { return; }
+                    Console.WriteLine(configJson.BotChannelRebuild);
+                    if (configJson.BotChannelRebuild)
+                    {
+                        try 
+                        {
+                            BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]);
+                            BotChannelBannerMessages.Remove(GuildId);
+                            DeletePool.Add(BannerMsg.Id, new DeleteMessage(BannerMsg.Channel, BannerMsg));
+                            BannerMsg = await chn.SendMessageAsync(configJson.BannerPicture);
+                            BotChannelBannerMessages.Add(GuildId, BannerMsg.Id);
+                        } catch { return; }
+                    }
+                    else
+                    {
+                        BannerMsg = await chn.GetMessageAsync(BotChannelBannerMessages[GuildId]);
+                    }
+                  
                    
                 }
 
@@ -602,7 +628,39 @@ namespace LemixDiscordMusikBot.Commands
                 }
                 else
                 {
-                    MainMsg = await chn.GetMessageAsync(BotChannelMainMessages[GuildId]);
+                    if (configJson.BotChannelRebuild)
+                    {
+                        try
+                        {
+                            MainMsg = await chn.GetMessageAsync(BotChannelMainMessages[GuildId]);
+                            BotChannelMainMessages.Remove(GuildId);
+                            DeletePool.Add(MainMsg.Id, new DeleteMessage(MainMsg.Channel, MainMsg));
+                            var Mainembed = new DiscordEmbedBuilder
+                            {
+                                Title = "No song playing currently",
+                                Description = "[Discord](https://discord.gg/JbPfCTA) | [Invite](https://discord.com/oauth2/authorize?client_id=696739313307746334&permissions=3271760&scope=bot)",
+                                Color = DiscordColor.Orange
+                            };
+                            Mainembed.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
+                            Mainembed.WithImageUrl(configJson.NoSongPicture);
+                            MainMsg = await chn.SendMessageAsync(embed: Mainembed);
+                            await MainMsg.CreateReactionAsync(PlayPause);
+                            await MainMsg.CreateReactionAsync(Stop);
+                            await MainMsg.CreateReactionAsync(NextTrack);
+                            await MainMsg.CreateReactionAsync(Loop);
+                            await MainMsg.CreateReactionAsync(TwistedArrows);
+                            await MainMsg.CreateReactionAsync(Star);
+                            await MainMsg.CreateReactionAsync(Crossed);
+                            await MainMsg.CreateReactionAsync(l_char);
+                            BotChannelMainMessages.Add(GuildId, MainMsg.Id);
+                        }
+                        catch { return; }
+                    }
+                    else
+                    {
+                        MainMsg = await chn.GetMessageAsync(BotChannelMainMessages[GuildId]);
+                    }
+                    
                 }
                 //   if (restore)
                 //return;
@@ -1244,25 +1302,30 @@ namespace LemixDiscordMusikBot.Commands
                     }
                     catch
                     {
-                        if (VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection1))
+                        try
                         {
-                            await LeaveAsync(ctx);
+                            if (VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection1))
+                            {
+                                await LeaveAsync(ctx);
+                            }
+                            await chn.DeleteAsync();
+                            BotChannels.Remove(ctx.Guild.Id);
+                            BotChannelMainMessages.Remove(ctx.Guild.Id);
+                            BotChannelBannerMessages.Remove(ctx.Guild.Id);
+                            if (TrackLoadPlaylists.ContainsKey(ctx.Guild.Id))
+                                TrackLoadPlaylists[ctx.Guild.Id].Clear();
+                            var newchn = await CreateBotChannelAsync(ctx, true);
+                            var MessagesRestoredNewChn = new DiscordEmbedBuilder
+                            {
+                                Title = $"Botchannel messages restored!",
+                                Color = DiscordColor.DarkGreen
+                            };
+                            MessagesRestoredNewChn.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
+                            MessagesRestoredNewChn.AddField("Channel:", $"{newchn.Mention}");
+                            await ctx.Channel.SendMessageAsync(embed: MessagesRestoredNewChn);
                         }
-                        await chn.DeleteAsync();
-                        BotChannels.Remove(ctx.Guild.Id);
-                        BotChannelMainMessages.Remove(ctx.Guild.Id);
-                        BotChannelBannerMessages.Remove(ctx.Guild.Id);
-                        if(TrackLoadPlaylists.ContainsKey(ctx.Guild.Id))
-                            TrackLoadPlaylists[ctx.Guild.Id].Clear();
-                        var newchn = await CreateBotChannelAsync(ctx, true);
-                        var MessagesRestoredNewChn = new DiscordEmbedBuilder
-                        {
-                            Title = $"Botchannel messages restored!",
-                            Color = DiscordColor.DarkGreen
-                        };
-                        MessagesRestoredNewChn.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
-                        MessagesRestoredNewChn.AddField("Channel:", $"{newchn.Mention}");
-                        await ctx.Channel.SendMessageAsync(embed: MessagesRestoredNewChn);
+                        catch { }
+                        
                         return;
                     }
 
@@ -1274,7 +1337,12 @@ namespace LemixDiscordMusikBot.Commands
                     };
                     SetupAlreadyDone.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
                     SetupAlreadyDone.AddField("Channel:", $"{chn.Mention}");
-                    await ctx.Channel.SendMessageAsync(embed: SetupAlreadyDone);
+                    try
+                    {
+                        await ctx.Channel.SendMessageAsync(embed: SetupAlreadyDone);
+                    }
+                    catch { }
+                    
                     return;
                 }
                 if (VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection2))

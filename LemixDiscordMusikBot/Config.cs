@@ -33,10 +33,14 @@ namespace LemixDiscordMusikBot
         public StatusItem[] StatusItems { get;  set; }
         [JsonProperty("StatusRefreshTimer")]
         public int StatusRefreshTimer { get;  set; }
+        [JsonProperty("BannerPicture")]
+        public String BannerPicture { get;  set; }
         [JsonProperty("NoSongPicture")]
-        public String NoSongPicture { get;  set; }
+        public String NoSongPicture { get; set; }
         [JsonProperty("DefaultVolume")]
         public int DefaultVolume { get;  set; }
+        [JsonProperty("BotChannelRebuild")]
+        public bool BotChannelRebuild { get; set; }
 
     }
     public struct StatusItem

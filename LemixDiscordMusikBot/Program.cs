@@ -32,6 +32,8 @@ namespace LemixDiscordMusikBot
             NewConfig.StatusItems = new StatusItem[] { new StatusItem() { Activity = DSharpPlus.Entities.ActivityType.Playing, StatusType = DSharpPlus.Entities.UserStatus.Online, Text = "Placeholder text here" } };
             NewConfig.DefaultVolume = 10;
             NewConfig.NoSongPicture = "https://www.bund.net/fileadmin/user_upload_bund/bilder/tiere_und_pflanzen/bedrohte_arten/fischotter.jpg";
+            NewConfig.BannerPicture = "https://www.fotor.com/blog/wp-content/uploads/2017/09/1-2.jpg";
+            NewConfig.BotChannelRebuild = false;
 
             Console.Title = $"Discordbot by Lemix {Version}";
 

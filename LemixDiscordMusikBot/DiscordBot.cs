@@ -39,7 +39,6 @@ namespace LemixDiscordMusikBot
         {
 
             var json = string.Empty;
-            // Console.WriteLine(JsonConvert.SerializeObject(new StatusItem {Activity = ActivityType.Playing, StatusType = UserStatus.DoNotDisturb, Text = "asdfcuzghuzhgodsaf" }));
             try
             {
                 using (var fs = File.OpenRead("config.json"))
@@ -311,8 +310,12 @@ namespace LemixDiscordMusikBot
                         if (s.CurrentUser.Username != configJson.BotUsername)
                         {
                             await s.UpdateCurrentUserAsync(configJson.BotUsername);
-                            s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username set to {configJson.BotUsername}.");
-                        }
+                            s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username set to '{configJson.BotUsername}'");
+                    }
+                    else
+                    {
+                        s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username is already '{configJson.BotUsername}'");
+                    }
 
                     }
                     catch
@@ -321,7 +324,6 @@ namespace LemixDiscordMusikBot
                     }
 
                     s.Logger.LogInformation(new EventId(7777, "ClientReady"), "Client is ready to process events");
-                    // await e.Client.UpdateStatusAsync(new DiscordActivity($"auf {GuildCount} Servern und auf {e.Client.ShardCount} Sharded Clients | Made by Lemix | In Development", ActivityType.Playing), UserStatus.DoNotDisturb);
                     await Task.Factory.StartNew(() => UpdateStatus(s, e));
 
                 }
@@ -381,8 +383,6 @@ namespace LemixDiscordMusikBot
                 return Task.CompletedTask;
             }
         }
-
-
         private async Task<int> ResolvePrefixAsync(DiscordMessage msg)
         {
 
