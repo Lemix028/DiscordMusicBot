@@ -47,6 +47,7 @@ namespace LemixDiscordMusikBot.Commands
         private Dictionary<ulong, List<LavalinkTrack>> FavoritesTracksLists = new Dictionary<ulong, List<LavalinkTrack>>();
         private Dictionary<ulong, loopmode> Loopmodes = new Dictionary<ulong, loopmode>();
         private Dictionary<ulong, Boolean> Cooldown = new Dictionary<ulong, Boolean>();
+        private List<ulong> CooldownAlreadyOnCooldown = new List<ulong>();
         private Dictionary<ulong, Boolean> ReactionCooldown = new Dictionary<ulong, Boolean>();
         private Dictionary<ulong, Boolean> VoteSkip = new Dictionary<ulong, Boolean>();
         private Dictionary<ulong, List<Tuple<DiscordRole, role>>> GuildRoles = new Dictionary<ulong, List<Tuple<DiscordRole, role>>>();
@@ -377,23 +378,17 @@ namespace LemixDiscordMusikBot.Commands
         }
 
         //Add all messages in Botchannel for delete
-        private Task OnMessageCreated(DiscordClient s, MessageCreateEventArgs e) {
-            if (e.Guild != null)
-            {
-                if (!BotChannels.ContainsKey(e.Guild.Id))
-                    return Task.CompletedTask;
-            } else
-            {
-               // s.Logger.LogDebug(new EventId(8898), "Guild is null");
-                return Task.CompletedTask;
-            }
-
-            if (e.Author.Id == s.CurrentUser.Id || e.Channel.Id != BotChannels[e.Guild.Id])
-                return Task.CompletedTask;
-            if(DeletePool != null)
+        private async Task OnMessageCreated(DiscordClient s, MessageCreateEventArgs e) {
+            if (e.Guild == null)
+                return;
+            if (!BotChannels.ContainsKey(e.Guild.Id))
+                return;
+            if(e.Message.Id == BotChannelMainMessages[e.Guild.Id] || e.Message.Id == BotChannelBannerMessages[e.Guild.Id] || e.Channel.Id != BotChannels[e.Guild.Id])
+                return;
+            //await Task.Delay(5000); An event handler caused the invocation of an asynchronous event to time out.
+            if (DeletePool != null)
                 if(!DeletePool.ContainsKey(e.Message.Id))
                     DeletePool.Add(e.Message.Id, new DeleteMessage(e.Channel, e.Message));
-            return Task.CompletedTask;
         }
 
         private async Task OnMessageReactionAdded(DiscordClient sender, MessageReactionAddEventArgs e)
@@ -435,22 +430,23 @@ namespace LemixDiscordMusikBot.Commands
             };
             if (e.Exception is DSharpPlus.CommandsNext.Exceptions.CommandNotFoundException)
             {
-                var msg = await e.Context.Channel.SendMessageAsync(embed: UnkownCommandEmbed);
-                if (!DeletePool.ContainsKey(msg.Id))
-                    DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
+                //var msg = await e.Context.Channel.SendMessageAsync(embed: UnkownCommandEmbed);
+                //if (!DeletePool.ContainsKey(msg.Id))
+                //    DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
             }
-            else if (e.Exception is System.ArgumentException)
+            else if (e.Exception is ArgumentException)
             {
                 var msg = await e.Context.Channel.SendMessageAsync(embed: ArgumentCommandEmbed);
-                if (!DeletePool.ContainsKey(msg.Id))
-                    DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
+                // if (!DeletePool.ContainsKey(msg.Id))
+                //    // DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
+
             }
             else
             {
                 s.Client.Logger.LogError(new EventId(7776, "UnkownError"), $"Unknown command error has occurred! (Command: {e.Context.Message.Content} Exception: {e.Exception})");
                 var msg = await e.Context.Channel.SendMessageAsync(embed: UnkownEmbed);
-                if (!DeletePool.ContainsKey(msg.Id))
-                    DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
+             //   if (!DeletePool.ContainsKey(msg.Id))
+             //       // DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
             }
             if(e.Context.Guild == null)
                 return Task.CompletedTask;
@@ -470,7 +466,10 @@ namespace LemixDiscordMusikBot.Commands
                     if (e?.Context?.Guild != null)
                     {
                         if (!Cooldown.ContainsKey(e.Context.Guild.Id)) { return Task.CompletedTask;  }
+                        if (CooldownAlreadyOnCooldown.Contains(e.Context.Guild.Id)) { return Task.CompletedTask; }
+                        CooldownAlreadyOnCooldown.Add(e.Context.Guild.Id);
                         await Task.Delay(CommandCooldown);
+                        CooldownAlreadyOnCooldown.Remove(e.Context.Guild.Id);
                         if (Cooldown.ContainsKey(e.Context.Guild.Id))
                             Cooldown[e.Context.Guild.Id] = false;
                     }
@@ -584,7 +583,6 @@ namespace LemixDiscordMusikBot.Commands
                 }
                 else
                 {
-                    Console.WriteLine(configJson.BotChannelRebuild);
                     if (configJson.BotChannelRebuild)
                     {
                         try 
@@ -795,7 +793,7 @@ namespace LemixDiscordMusikBot.Commands
                             if (entry.Identifier == track.Identifier)
                             {
                                 var errmsg = await chn.SendMessageAsync("Already favorite.");
-                                DeletePool.Add(errmsg.Id, new DeleteMessage(chn, errmsg));
+                                // DeletePool.Add(errmsg.Id, new DeleteMessage(chn, errmsg));
                                 abort = true;
                             }
                         }
@@ -803,7 +801,7 @@ namespace LemixDiscordMusikBot.Commands
                             continue;
                         FavoritesTracksLists[GuildId].Add(track);
                         var msg = await chn.SendMessageAsync("Successfully added.");
-                        DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
+                        // DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
                         await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, $"Playing `{track.Title}`", ImageUrl: getThumbnail(track), Footer: $"{getQueueCount(GuildId)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(GuildId)}{GetFavoriteMessage(GuildId, track)}");
 
                     }
@@ -817,7 +815,8 @@ namespace LemixDiscordMusikBot.Commands
 
                         if (!VoiceConnections.TryGetValue(GuildId, out LavalinkGuildConnection VoiceConnection))
                             continue;
-
+                        if (await CheckIsBotChannelAndMessagesExits(ctx, GuildId))
+                            continue;
                         Boolean abort = false;
                         LavalinkTrack track = TrackLoadPlaylists[GuildId].First();
                         foreach (LavalinkTrack entry in FavoritesTracksLists[GuildId].ToList())
@@ -825,9 +824,26 @@ namespace LemixDiscordMusikBot.Commands
                             if (entry.Identifier == track.Identifier)
                             {
                                 FavoritesTracksLists[GuildId].Remove(entry);
-                                var msg = await chn.SendMessageAsync("Successfully removed.");
 
-                                DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
+                                #region nexttrack
+
+                                if (TrackLoadPlaylists[GuildId].Count <= 1)
+                                {
+                                    result.Result.Guild.Members.TryGetValue(result.Result.User.Id, out DiscordMember member);
+
+
+                                    if (member.VoiceState?.Channel != VoiceConnection.Channel || member.VoiceState?.Channel == null)
+                                    {
+                                        continue;
+                                    }
+                                    TrackLoadPlaylists[GuildId].Clear();
+                                    await VoiceConnection.StopAsync().ConfigureAwait(false);
+                                    await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, "No song playing currently", ImageUrl: configJson.NoSongPicture, Footer: $"Prefix for this Server is: {ctx.Prefix}"); // PREFIX
+                                    #endregion
+                                }
+                                    var msg = await chn.SendMessageAsync("Successfully removed.");
+
+                                // DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
                                 await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, $"Playing `{track.Title}`", ImageUrl: getThumbnail(track), Footer: $"{getQueueCount(GuildId)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetFavoriteMessage(GuildId, track)}");
                                 abort = true;
                             }
@@ -835,7 +851,7 @@ namespace LemixDiscordMusikBot.Commands
                         if (abort)
                             continue;
                         var errmsg = await chn.SendMessageAsync("Not at favorites.");
-                        DeletePool.Add(errmsg.Id, new DeleteMessage(chn, errmsg));
+                        // DeletePool.Add(errmsg.Id, new DeleteMessage(chn, errmsg));
 
 
 
@@ -856,7 +872,7 @@ namespace LemixDiscordMusikBot.Commands
                                     Color = DiscordColor.Red
                                 };
                                 DiscordMessage msg1 = await chn.SendMessageAsync(embed: NoVoiceConnectionEmbed);
-                                DeletePool.Add(msg1.Id, new DeleteMessage(chn, msg1));
+                                // DeletePool.Add(msg1.Id, new DeleteMessage(chn, msg1));
                                 continue;
                             }
 
@@ -876,7 +892,7 @@ namespace LemixDiscordMusikBot.Commands
                                     Color = DiscordColor.Orange
                                 };
                                 DiscordMessage msg1 = await chn.SendMessageAsync(embed: NoVoiceConnectionEmbed);
-                                DeletePool.Add(msg1.Id, new DeleteMessage(chn, msg1));
+                                // DeletePool.Add(msg1.Id, new DeleteMessage(chn, msg1));
                                 continue;
                             } 
                             else
@@ -892,7 +908,7 @@ namespace LemixDiscordMusikBot.Commands
                                     Color = DiscordColor.Orange
                                 };
                                 DiscordMessage msg1 = await chn.SendMessageAsync(embed: NoVoiceConnectionEmbed);
-                                DeletePool.Add(msg1.Id, new DeleteMessage(chn, msg1));
+                                // DeletePool.Add(msg1.Id, new DeleteMessage(chn, msg1));
                                 continue;
                             }
                                 
@@ -911,7 +927,7 @@ namespace LemixDiscordMusikBot.Commands
                                 {
                                     var errmsg = await ctx.Channel.SendMessageAsync($"Song {entry?.Title} cannot be found and will be removed!");
                                     FavoritesTracksLists[GuildId].Remove(entry);
-                                    DeletePool.Add(errmsg.Id, new DeleteMessage(ctx.Channel, errmsg));
+                                    // DeletePool.Add(errmsg.Id, new DeleteMessage(ctx.Channel, errmsg));
                                 }
 
                             }
@@ -1247,8 +1263,8 @@ namespace LemixDiscordMusikBot.Commands
         [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetupAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+           //if (!DeletePool.ContainsKey(ctx.Message.Id))
+           //     // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
              try
             {
                 if (CheckHasCooldown(ctx))
@@ -1441,24 +1457,24 @@ namespace LemixDiscordMusikBot.Commands
                     GuildId = ctx.Guild.Id;
                 if (!BotChannels.ContainsKey(GuildId) || !BotChannelMainMessages.ContainsKey(GuildId) || !BotChannelBannerMessages.ContainsKey(GuildId))
                 {
-                    if (!DeletePool.ContainsKey(ctx.Message.Id))
-                        DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+                  //  if (!DeletePool.ContainsKey(ctx.Message.Id))
+                  //      // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
                     await ctx.Channel.SendMessageAsync(embed: BotChannelsOrMessagesAreMissing);
                     return true;
                 }
                 var guild = ctx.Client.GetGuildAsync(GuildId);
                 if(guild.Result == null)
                 {
-                    if (!DeletePool.ContainsKey(ctx.Message.Id))
-                        DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+                   // if (!DeletePool.ContainsKey(ctx.Message.Id))
+                    //    // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
                     await ctx.Channel.SendMessageAsync(embed: BotChannelsOrMessagesAreMissing);
                     return true;
                 }
                 var chn = guild.Result.GetChannel(BotChannels[GuildId]);
                 if (chn == null)
                 {
-                    if (!DeletePool.ContainsKey(ctx.Message.Id))
-                        DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+                   // if (!DeletePool.ContainsKey(ctx.Message.Id))
+                   //     // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
                     await ctx.Channel.SendMessageAsync(embed: BotChannelsOrMessagesAreMissing);
                     return true;
                 }
@@ -1477,8 +1493,8 @@ namespace LemixDiscordMusikBot.Commands
                     }
                     BotChannelMainMessages.Remove(GuildId);
                     BotChannelBannerMessages.Remove(GuildId);
-                    if (!DeletePool.ContainsKey(ctx.Message.Id))
-                        DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+                   // if (!DeletePool.ContainsKey(ctx.Message.Id))
+                   //     DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
                     await ctx.Channel.SendMessageAsync(embed: BotChannelsOrMessagesAreMissing);
                     return true;
                 }
@@ -1500,8 +1516,8 @@ namespace LemixDiscordMusikBot.Commands
             if (GuildId == 0)
             {
                 GuildId = ctx.Guild.Id;
-                if (!DeletePool.ContainsKey(ctx.Message.Id))
-                    DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+               // if (!DeletePool.ContainsKey(ctx.Message.Id))
+               //     DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
                 if (CheckHasCooldown(ctx, GuildId))
                 {
@@ -1567,7 +1583,7 @@ namespace LemixDiscordMusikBot.Commands
                             Color = DiscordColor.Red
                         };
                         DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendCannotJoinEmbed);
-                        DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                        // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                         return;
                     }
 
@@ -1591,7 +1607,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.Red
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendCannotJoinEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
                 
@@ -1635,8 +1651,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("leave"), Description("1Leaves a voice channel."), Aliases("dc", "disconnect")]
         public async Task LeaveAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+          //  if (!DeletePool.ContainsKey(ctx.Message.Id))
+          //      // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (CheckHasCooldown(ctx))
             {
                 SendCooldownAsync(ctx);
@@ -1685,8 +1701,8 @@ namespace LemixDiscordMusikBot.Commands
 
         [Command("play"), Description("1Add a song to the queue with a URL.|Add a song to the queue with a Keywords."), Aliases("p")]
         public async Task QueueAsync(CommandContext ctx, [Description("Youtube, Soundcloud, Twitch, Vimeo Links.\nTwitch Livestream support.")] Uri Url) {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+           // if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //    // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (Url.ToString() == String.Empty)
                 return;
@@ -1737,7 +1753,7 @@ namespace LemixDiscordMusikBot.Commands
                     };
 
                     var listmsg = await chn.SendMessageAsync(embed: listembed).ConfigureAwait(false);
-                    DeletePool.Add(listmsg.Id, new DeleteMessage(chn, listmsg));
+                    // DeletePool.Add(listmsg.Id, new DeleteMessage(chn, listmsg));
                     return;
                 }
                 else
@@ -1782,7 +1798,7 @@ namespace LemixDiscordMusikBot.Commands
                     var nfmsg = await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
                     try
                     {
-                        DeletePool.Add(nfmsg.Id, new DeleteMessage(ctx.Channel, nfmsg));
+                        // DeletePool.Add(nfmsg.Id, new DeleteMessage(ctx.Channel, nfmsg));
                     }
                     catch { }
                     return;
@@ -1798,7 +1814,7 @@ namespace LemixDiscordMusikBot.Commands
                     
                     try
                     {
-                        DeletePool.Add(nfmsg.Id, new DeleteMessage(ctx.Channel, nfmsg));
+                        // DeletePool.Add(nfmsg.Id, new DeleteMessage(ctx.Channel, nfmsg));
                     }
                     catch { }
                     return;
@@ -1836,7 +1852,7 @@ namespace LemixDiscordMusikBot.Commands
                         };
                         var announcemsg = await ctx.Channel.SendMessageAsync(embed: addtolistembed).ConfigureAwait(false);
                     
-                        DeletePool.Add(announcemsg.Id, new DeleteMessage(ctx.Channel, announcemsg));
+                        // DeletePool.Add(announcemsg.Id, new DeleteMessage(ctx.Channel, announcemsg));
 
                     return;
                 }
@@ -1975,8 +1991,8 @@ namespace LemixDiscordMusikBot.Commands
             try
             {
 
-                if (!DeletePool.ContainsKey(ctx.Message.Id))
-                    DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+               // if (!DeletePool.ContainsKey(ctx.Message.Id))
+               //     // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
                 
                 if (Keywords == String.Empty)
                     return;
@@ -2022,7 +2038,7 @@ namespace LemixDiscordMusikBot.Commands
                     
                     try
                     {
-                        DeletePool.Add(nfmsg.Id, new DeleteMessage(ctx.Channel, nfmsg));
+                        // DeletePool.Add(nfmsg.Id, new DeleteMessage(ctx.Channel, nfmsg));
                     }
                     catch { }
                     
@@ -2057,7 +2073,7 @@ namespace LemixDiscordMusikBot.Commands
                         
                         try
                         {
-                            DeletePool.Add(announcemsg.Id, new DeleteMessage(ctx.Channel, announcemsg));
+                            // DeletePool.Add(announcemsg.Id, new DeleteMessage(ctx.Channel, announcemsg));
                         }
                         catch { }
 
@@ -2625,8 +2641,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("next"), Description("2Skips to the next song."), Aliases("n", "skip")]
         public async Task NextAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+           // if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //    // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
@@ -2704,8 +2720,8 @@ namespace LemixDiscordMusikBot.Commands
         {
             try
             {
-                if (!DeletePool.ContainsKey(ctx.Message.Id))
-                    DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+              //  if (!DeletePool.ContainsKey(ctx.Message.Id))
+               //     // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
                 if (CheckHasCooldown(ctx))
                 {
                     SendCooldownAsync(ctx);
@@ -2744,7 +2760,7 @@ namespace LemixDiscordMusikBot.Commands
                             Color = DiscordColor.Orange
                         };
                         var msgal = chn.SendMessageAsync(embed: VoteSkipAlreadyExistsEmbed);
-                        DeletePool.Add(msgal.Result.Id, new DeleteMessage(chn, msgal.Result));
+                        // DeletePool.Add(msgal.Result.Id, new DeleteMessage(chn, msgal.Result));
                         return;
                     }
 
@@ -2773,7 +2789,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.Orange
                     };
                     DiscordMessage msg2 = chn.SendMessageAsync(embed: VoteSkip1Embed).Result;
-                    DeletePool.Add(msg2.Id, new DeleteMessage(chn, msg2));
+                    // DeletePool.Add(msg2.Id, new DeleteMessage(chn, msg2));
                     VoteSkip[ctx.Guild.Id] = false;
                     return;
                 }
@@ -2813,7 +2829,7 @@ namespace LemixDiscordMusikBot.Commands
                             Color = DiscordColor.Orange
                         };
                         await msg.ModifyAsync(embed: EditedEmbed.Build());
-                        DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
+                        // DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
                         VoteSkip[ctx.Guild.Id] = false;
                     }
                     await Task.Delay(1000);
@@ -2854,7 +2870,7 @@ namespace LemixDiscordMusikBot.Commands
                                 Color = DiscordColor.DarkGreen
                             };
                             await msg.ModifyAsync(embed: Editedembedsuccess.Build());
-                            DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
+                            // DeletePool.Add(msg.Id, new DeleteMessage(chn, msg));
                             VoteSkip[ctx.Guild.Id] = false;
                             return;
                         }
@@ -2872,9 +2888,9 @@ namespace LemixDiscordMusikBot.Commands
         [Command("jump"), Description("2Jumps to a special song in the queue."), Aliases("j", "goto")]
         public async Task JumpAsync(CommandContext ctx, [Description("Index der Playlist"), RemainingText] int index)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-           
+            //  if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //     // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
             if (CheckHasCooldown(ctx))
@@ -2909,7 +2925,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendOutOfRangeEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
             var track = TrackLoadPlaylists[ctx.Guild.Id].GetItemByIndex(index);
@@ -2926,8 +2942,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("remove"), Description("2Deletes a song from the queue."), Aliases("r", "rm", "delete", "del")]
         public async Task RemoveAsync(CommandContext ctx, [Description("Index der Playlist"), RemainingText] int index)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            // if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
@@ -2961,7 +2977,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendOutOfRangeEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
             TrackLoadPlaylists[ctx.Guild.Id].RemoveAt(index);
@@ -2976,8 +2992,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("loop"), Description("2Switch between 3 loop modes.\nOff: Loop deactivated.\nLoopqueue: Loops the complete queue.\nLoopsong: Loops only a special song."), Aliases("l")]
         public async Task LoopAsync(CommandContext ctx)
           {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
@@ -3055,8 +3071,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("clear"), Description("2Clears the queue.")]
         public async Task ClearAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (CheckHasCooldown(ctx))
             {
                 SendCooldownAsync(ctx);
@@ -3095,7 +3111,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendQueueClearedEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
             var chn = ctx.Guild.GetChannel(BotChannels[ctx.Guild.Id]);
             var MainMsg = await chn.GetMessageAsync(BotChannelMainMessages[ctx.Guild.Id]);
             await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange);
@@ -3172,9 +3188,9 @@ namespace LemixDiscordMusikBot.Commands
         [Command("pause"), Description("1Pauses playback.")]
         public async Task PauseAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-            if(!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
 
             if (CheckHasCooldown(ctx))
@@ -3213,8 +3229,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("resume"), Description("1Resumes playback.")]
         public async Task ResumeAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
             if (CheckHasCooldown(ctx))
@@ -3255,7 +3271,7 @@ namespace LemixDiscordMusikBot.Commands
         /*   [Command("ping"), Description("4Get current Websocket Latency to Discord API")]
         public async Task PingAsync(CommandContext ctx)
         {
-            DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             DiscordEmbedBuilder PingEmbed = new DiscordEmbedBuilder
             {
@@ -3281,8 +3297,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("stop"), Description("1Stops playback and clear the queue.")]
         public async Task StopAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
@@ -3313,9 +3329,9 @@ namespace LemixDiscordMusikBot.Commands
         [Command("shuffle"), Description("2Shuffel the current queue.")]
         public async Task ShuffleAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-    
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
             if (CheckHasCooldown(ctx))
@@ -3345,61 +3361,61 @@ namespace LemixDiscordMusikBot.Commands
 
         }
 
-        [Command("24/7"), Description("2Enable the 24/7 mode.\nThe bot will no longer automatically leave the voice channel."), Aliases("247")]
-        public async Task TwentyFourSevenAsync(CommandContext ctx)
-        {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-            if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
-                return;
-            if (CheckHasCooldown(ctx))
-            {
-                SendCooldownAsync(ctx);
-                return;
-            }
-            if (CheckHasPermission(ctx, role.dj))
-                return;
-            if (BotChannels[ctx.Guild.Id] != ctx.Channel.Id)
-            {
-                SendRestrictedChannelAsync(ctx);
-                return;
-            }
-            if (ctx.Member.VoiceState?.Channel != VoiceConnection.Channel || ctx.Member.VoiceState?.Channel == null)
-            {
-                SendNotInSameChannelAsync(ctx);
-                return;
-            }
-            if (AFKTimeOffsets.ContainsKey(ctx.Guild.Id))
-                AFKTimeOffsets[ctx.Guild.Id] = new DateTimeOffset();
+        //[Command("24/7"), Description("2Enable the 24/7 mode.\nThe bot will no longer automatically leave the voice channel."), Aliases("247")]
+        //public async Task TwentyFourSevenAsync(CommandContext ctx)
+        //{
+        //    //if (!DeletePool.ContainsKey(ctx.Message.Id))
+        //    //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+        //    if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
+        //        return;
+        //    if (CheckHasCooldown(ctx))
+        //    {
+        //        SendCooldownAsync(ctx);
+        //        return;
+        //    }
+        //    if (CheckHasPermission(ctx, role.dj))
+        //        return;
+        //    if (BotChannels[ctx.Guild.Id] != ctx.Channel.Id)
+        //    {
+        //        SendRestrictedChannelAsync(ctx);
+        //        return;
+        //    }
+        //    if (ctx.Member.VoiceState?.Channel != VoiceConnection.Channel || ctx.Member.VoiceState?.Channel == null)
+        //    {
+        //        SendNotInSameChannelAsync(ctx);
+        //        return;
+        //    }
+        //    if (AFKTimeOffsets.ContainsKey(ctx.Guild.Id))
+        //        AFKTimeOffsets[ctx.Guild.Id] = new DateTimeOffset();
 
-            if (CheckAFKStates.ContainsKey(ctx.Guild.Id))
-                CheckAFKStates[ctx.Guild.Id] = !CheckAFKStates[ctx.Guild.Id];
-            else
-                CheckAFKStates.Add(ctx.Guild.Id, false);
+        //    if (CheckAFKStates.ContainsKey(ctx.Guild.Id))
+        //        CheckAFKStates[ctx.Guild.Id] = !CheckAFKStates[ctx.Guild.Id];
+        //    else
+        //        CheckAFKStates.Add(ctx.Guild.Id, false);
 
-            if (CheckAFKStates[ctx.Guild.Id] == false)
-            {
+        //    if (CheckAFKStates[ctx.Guild.Id] == false)
+        //    {
 
-                var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
-                {
-                    Description = "The 24/7 mode has been enabled.",
-                    Color = DiscordColor.Orange
-                };
-                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
-            } 
-            else
-            {
-                var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
-                {
-                    Description = "The 24/7 mode has been disabled.",
-                    Color = DiscordColor.Orange
-                };
-                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
-            }
+        //        var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
+        //        {
+        //            Description = "The 24/7 mode has been enabled.",
+        //            Color = DiscordColor.Orange
+        //        };
+        //        DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
+        //        // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+        //    } 
+        //    else
+        //    {
+        //        var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
+        //        {
+        //            Description = "The 24/7 mode has been disabled.",
+        //            Color = DiscordColor.Orange
+        //        };
+        //        DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
+        //        // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+        //    }
             
-        }
+        //}
 
         /* [Command("announce"), Description("WIP")]
          public async Task AnnounceAsync(CommandContext ctx)
@@ -3429,8 +3445,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("seek"), Description("2Goes to a specific position in the current song.\nIn the following format (max 2 digits each):\n [Seconds] \n [Minutes]:[Seconds] \n [Hours]:[Minutes]:[Seconds]")]
         public async Task SeekAsync(CommandContext ctx, String pos)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
@@ -3467,7 +3483,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage errmsg = await ctx.Channel.SendMessageAsync(embed: SendErrMsgEmbed);
-                DeletePool.Add(errmsg.Id, new DeleteMessage(ctx.Channel, errmsg));
+                // DeletePool.Add(errmsg.Id, new DeleteMessage(ctx.Channel, errmsg));
                 return; 
             }
      
@@ -3490,15 +3506,15 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
         [Command("volume"), Description("2Lautstärke regeln."), Aliases("v")]
         public async Task VolumeAsync(CommandContext ctx, int volume)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-    
+            // if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
             LavalinkGuildConnection VoiceConnection;
             VoiceConnections.TryGetValue(ctx.Guild.Id, out VoiceConnection);
 
@@ -3529,7 +3545,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendnotInRangeEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
 
@@ -3633,8 +3649,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("equalizer"), Description("2Resets equalizer settings.|Sets equalizer settings."), Aliases("eq")]
         public async Task EqualizerAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
             if (CheckHasCooldown(ctx))
@@ -3652,14 +3668,14 @@ namespace LemixDiscordMusikBot.Commands
             await VoiceConnection.ResetEqualizerAsync();
             
             var eqmsg = await ctx.RespondAsync("All equalizer bands were reset.").ConfigureAwait(false);
-            DeletePool.Add(eqmsg.Id, new DeleteMessage(eqmsg.Channel, eqmsg));
+            // DeletePool.Add(eqmsg.Id, new DeleteMessage(eqmsg.Channel, eqmsg));
         }
 
         [Command("equalizer")]
         public async Task EqualizerAsync(CommandContext ctx, int Band, float Gain)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (!VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection))
                 return;
             if (CheckHasCooldown(ctx))
@@ -3677,7 +3693,7 @@ namespace LemixDiscordMusikBot.Commands
             await VoiceConnection.AdjustEqualizerAsync(new LavalinkBandAdjustment(Band, Gain));
             
             var eqmsg = await ctx.RespondAsync($"Band {Band} adjusted by {Gain}").ConfigureAwait(false);
-            DeletePool.Add(eqmsg.Id, new DeleteMessage(eqmsg.Channel, eqmsg));
+            // DeletePool.Add(eqmsg.Id, new DeleteMessage(eqmsg.Channel, eqmsg));
         }
 
         /*    [Command("prefix")]
@@ -3689,8 +3705,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("setdj"), Description("3Set a Role as DJ")]
         public async Task SetDjAsync(CommandContext ctx, [Description("@Role Name")]String RoleName)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -3718,7 +3734,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleNotFoundEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
             
@@ -3732,7 +3748,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.Orange
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleAlreadyAddedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 } else
                 {
@@ -3744,7 +3760,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.DarkGreen
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleAlreadyAddedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
                 
@@ -3760,7 +3776,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.DarkGreen
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleAlreadyAddedEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
 
@@ -3769,7 +3785,7 @@ namespace LemixDiscordMusikBot.Commands
         public async Task RemoveDjAsync(CommandContext ctx, [Description("@Role Name")] String RoleName)
         {
             if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+                // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -3797,7 +3813,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleNotFoundEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
 
@@ -3812,7 +3828,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.Orange
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleRemovedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
                 else
@@ -3823,7 +3839,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.DarkGreen
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleIsNotAddedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
 
@@ -3836,7 +3852,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.DarkGreen
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleIsNotAddedEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
 
@@ -3844,8 +3860,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("djs"), Description("3Get all the roles that are Djs.")]
         public async Task GetDjsAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -3871,7 +3887,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg1 = await ctx.Channel.SendMessageAsync(embed: SendDjListEmptyEmbed);
-                DeletePool.Add(msg1.Id, new DeleteMessage(ctx.Channel, msg1));
+                // DeletePool.Add(msg1.Id, new DeleteMessage(ctx.Channel, msg1));
                 return;
             }
             var SendDjListEmbed = new DiscordEmbedBuilder
@@ -3881,14 +3897,14 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.DarkGreen
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendDjListEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
 
         }
         [Command("setadmin"), Description("3Set a Role as Admin")]
         public async Task SetAdminAsync(CommandContext ctx, [Description("@Role Name")] String RoleName)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -3916,7 +3932,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleNotFoundEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
             if (GuildRoles.ContainsKey(ctx.Guild.Id))
@@ -3929,7 +3945,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.Orange
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleAlreadyAddedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
                 else
@@ -3942,7 +3958,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.DarkGreen
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleAlreadyAddedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
 
@@ -3959,7 +3975,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.DarkGreen
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleAlreadyAddedEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
 
@@ -3967,8 +3983,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("removeadmin"), Description("3Set a Role as DJ"), Aliases("remadmin")]
         public async Task RemoveAdminAsync(CommandContext ctx, [Description("@Role Name")] String RoleName)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -3996,7 +4012,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleNotFoundEmbed);
-                DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }
 
@@ -4011,7 +4027,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.Orange
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleRemovedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
                 else
@@ -4022,7 +4038,7 @@ namespace LemixDiscordMusikBot.Commands
                         Color = DiscordColor.DarkGreen
                     };
                     DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleIsNotAddedEmbed);
-                    DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+                    // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                     return;
                 }
 
@@ -4044,8 +4060,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("admins"), Description("3Get all the roles that are Admins.")]
         public async Task GetAdminsAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            // if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -4063,7 +4079,7 @@ namespace LemixDiscordMusikBot.Commands
             if (!GuildRoles.ContainsKey(ctx.Guild.Id))
             {
                 DiscordMessage msg1 = await ctx.Channel.SendMessageAsync(embed: SendAdminListEmptyEmbed);
-                DeletePool.Add(msg1.Id, new DeleteMessage(ctx.Channel, msg1));
+                // DeletePool.Add(msg1.Id, new DeleteMessage(ctx.Channel, msg1));
                 return;
             }
             String AdminList = String.Empty;
@@ -4077,7 +4093,7 @@ namespace LemixDiscordMusikBot.Commands
             if (AdminList == String.Empty)
             {
                 DiscordMessage msg1 = await ctx.Channel.SendMessageAsync(embed: SendAdminListEmptyEmbed);
-                DeletePool.Add(msg1.Id, new DeleteMessage(ctx.Channel, msg1));
+                // DeletePool.Add(msg1.Id, new DeleteMessage(ctx.Channel, msg1));
                 return;
             }
             var SendAdminListEmbed = new DiscordEmbedBuilder
@@ -4087,15 +4103,15 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.DarkGreen
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendAdminListEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
 
         }
 
         [Command("prefix"), Description("3Get and sets the Prefix.")]
         public async Task PrefixAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -4142,10 +4158,10 @@ namespace LemixDiscordMusikBot.Commands
             InteractivityResult<MessageReactionAddEventArgs> firstresult = await ctx.Client.GetInteractivity().WaitForReactionAsync(x => x.Message == PrefixFirstMsg && x.User != ctx.Client.CurrentUser);
             if (firstresult.TimedOut)
             {
-                DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
+                // DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
                 var abort = await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
                 await Task.Delay(5000);
-                DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
+                // DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
                 return;
             }
 
@@ -4153,7 +4169,7 @@ namespace LemixDiscordMusikBot.Commands
 
             if (firstresult.Result.Emoji == SetNewEmoji)
             {
-                DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
+                // DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
                 var PrefixSetNewEmbed = new DiscordEmbedBuilder
                 {
                     Title = "Set new prefix!",
@@ -4164,10 +4180,10 @@ namespace LemixDiscordMusikBot.Commands
                 InteractivityResult<DiscordMessage> newprefixresult = await ctx.Client.GetInteractivity().WaitForMessageAsync(x => x.Author == firstresult.Result.User);
                 if (newprefixresult.TimedOut)
                 {
-                    DeletePool.Add(setnew.Id, new DeleteMessage(ctx.Channel, setnew));
+                    // DeletePool.Add(setnew.Id, new DeleteMessage(ctx.Channel, setnew));
                     var abort = await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
-                    await Task.Delay(5000);
-                    DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
+                    //await Task.Delay(5000);
+                    // DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
                     return;
                 }
                 string newprefix = newprefixresult.Result.Content.ToCharArray().First().ToString();
@@ -4181,21 +4197,21 @@ namespace LemixDiscordMusikBot.Commands
 
                 db.Execute($"UPDATE data SET Prefix = '{newprefix}' WHERE GuildId IN ({ctx.Guild.Id})");
 
-                DeletePool.Add(setnew.Id, new DeleteMessage(ctx.Channel, setnew));
+                // DeletePool.Add(setnew.Id, new DeleteMessage(ctx.Channel, setnew));
                 var success = await ctx.Channel.SendMessageAsync(embed: PrefixNewSuccessEmbed);
                 var MainMsg = await ctx.Channel.GetMessageAsync(BotChannelMainMessages[ctx.Guild.Id]);
                 await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, Footer: $"Prefix for this Server is: {newprefix}");
-                await Task.Delay(5000);
-                DeletePool.Add(success.Id, new DeleteMessage(ctx.Channel, success));
+                //await Task.Delay(5000);
+                // DeletePool.Add(success.Id, new DeleteMessage(ctx.Channel, success));
             }
 
             if (firstresult.Result.Emoji == Crossed)
             {
-                DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
+                // DeletePool.Add(PrefixFirstMsg.Id, new DeleteMessage(ctx.Channel, PrefixFirstMsg));
                 var abort = await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
                 await Task.Delay(5000);
-                DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
-                return;
+                // DeletePool.Add(abort.Id, new DeleteMessage(ctx.Channel, abort));
+               return;
             }
 
         }
@@ -4203,8 +4219,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("support"), Description("1To get support.")]
         public async Task SupportAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
 
             if (CheckHasCooldown(ctx))
@@ -4226,16 +4242,15 @@ namespace LemixDiscordMusikBot.Commands
             CreditsEmbed.AddField("For coopartions or further:", michi.Mention);
             CreditsEmbed.WithFooter("This bot is in beta and is constantly being developed.");
             var msg = await ctx.Channel.SendMessageAsync(embed: CreditsEmbed);
-            await Task.Delay(15000);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            //await Task.Delay(15000);
+            ///// DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
         [Command("invite"), Description("1To get an invitation link.")]
         public async Task InviteAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //// DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             if (CheckHasCooldown(ctx))
             {
@@ -4253,8 +4268,8 @@ namespace LemixDiscordMusikBot.Commands
             CreditsEmbed.AddField("Link", $"[Click here](https://discord.com/oauth2/authorize?client_id={ctx.Client.CurrentUser.Id}&permissions=3271760&scope=bot)");
             CreditsEmbed.WithFooter("This bot is in beta and is constantly being developed.");
             var msg = await ctx.Channel.SendMessageAsync(embed: CreditsEmbed);
-            await Task.Delay(5000);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            //await Task.Delay(5000);
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
         //Description first char:
@@ -4265,8 +4280,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("help"), Description("4")]
         public async Task HelpAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
             Dictionary<String, Command> FilteredCommands = new Dictionary<string, Command>();
             foreach (KeyValuePair<String, Command> entry in ctx.CommandsNext.RegisteredCommands)
@@ -4341,15 +4356,15 @@ namespace LemixDiscordMusikBot.Commands
             if (AdminCommands != String.Empty)
                 HelpEmbed.AddField("Administration commands", AdminCommands);
             var msg = await ctx.RespondAsync(embed: HelpEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
         [Command("help")]
         public async Task HelpAsync(CommandContext ctx, String Command)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-            if(Command.Equals("help", StringComparison.OrdinalIgnoreCase))
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            if (Command.Equals("help", StringComparison.OrdinalIgnoreCase))
             {
                 await HelpAsync(ctx);
                 return;
@@ -4440,16 +4455,16 @@ namespace LemixDiscordMusikBot.Commands
                 }
             }
             var msg = await ctx.RespondAsync(embed: HelpEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
         [Command("credits"), Description("1")]
         public async Task CreditsAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
-          
+
             if (CheckHasCooldown(ctx))
             {
                 SendCooldownAsync(ctx);
@@ -4469,19 +4484,47 @@ namespace LemixDiscordMusikBot.Commands
             CreditsEmbed.AddField("Bot Creation Time", ctx.Client.CurrentApplication.CreationTimestamp.ToString());
             CreditsEmbed.WithFooter("This bot is in beta and is constantly being developed.");
             var msg = await ctx.Channel.SendMessageAsync(embed: CreditsEmbed);
-            await Task.Delay(5000);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            //await Task.Delay(5000);
+            //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
+        [Command("ping"), Description("1")]
+        public async Task PingAsync(CommandContext ctx)
+        {
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
+
+            if (CheckHasCooldown(ctx))
+            {
+                SendCooldownAsync(ctx);
+                return;
+            }
+            if (CheckHasPermission(ctx, role.everyone))
+                return;
+            DiscordEmbedBuilder PingEmbed = new DiscordEmbedBuilder
+            {
+                Title = "Ping",
+                Color = DiscordColor.Blurple
+            };
+            var ping = ctx.Client.Ping;
+            
+            PingEmbed.AddField("Websocket Latency", $"{ping} ms");
+            PingEmbed.WithFooter("This bot is in beta and is constantly being developed.");
+            var msg = await ctx.Channel.SendMessageAsync(embed: PingEmbed);
+            
+
+            //await Task.Delay(5000);
+            //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+        }
 
         // !sendglobalmsg "Title" "TEXT" "color code without #" "footer text"
         [Command("sendglobalmsg"), Description("4")]
         public async Task SendGlobalMessageAsync(CommandContext ctx, string Title, string Description, string Color, string Footer)
         {
 
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
-           
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
                 DiscordMessage gm;
@@ -4518,9 +4561,9 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Green
                 };
                 var gmf = await ctx.RespondAsync(embed: GlobalMsgFinishedEmbed);
-                DeletePool.Add(gm.Id, new DeleteMessage(gm.Channel, gm));
-                await Task.Delay(10000);
-                DeletePool.Add(gmf.Id, new DeleteMessage(gmf.Channel, gmf));
+                //DeletePool.Add(gm.Id, new DeleteMessage(gm.Channel, gm));
+                //await Task.Delay(10000);
+                //DeletePool.Add(gmf.Id, new DeleteMessage(gmf.Channel, gmf));
                 
             }
 
@@ -4531,8 +4574,8 @@ namespace LemixDiscordMusikBot.Commands
         public async Task SendGlobalMessageTestAsync(CommandContext ctx, string Title, string Description, string Color, string Footer)
         {
 
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
               
@@ -4554,8 +4597,8 @@ namespace LemixDiscordMusikBot.Commands
         public async Task StatsAsync(CommandContext ctx)
         {
 
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
                 ctx.Client.Logger.LogInformation(new EventId(7700, "StatsCmd"), $"{ctx.Member.DisplayName} [{ctx.Member.Id}] executed Stats Command!");
@@ -4606,8 +4649,8 @@ namespace LemixDiscordMusikBot.Commands
         [Command("guildlist"), Description("4Developer Command.")]
         public async Task GuildListAsync(CommandContext ctx)
         {
-            if (!DeletePool.ContainsKey(ctx.Message.Id))
-                DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
+            //if (!DeletePool.ContainsKey(ctx.Message.Id))
+            //DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
             if (ctx.Member.Id == 267645496020041729 || ctx.Member.Id == 352508207094038538)
             {
                 ctx.Client.Logger.LogInformation(new EventId(7700, "StatsCmd"), $"{ctx.Member.DisplayName} [{ctx.Member.Id}] executed Guildlist Command!");
@@ -4998,7 +5041,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: cooldownembed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendRestrictedChannelAsync(CommandContext ctx, ulong GuildId = 0)
         {
@@ -5020,7 +5063,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: RestrictedChannelEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendNotInSameChannelAsync(CommandContext ctx)
         {
@@ -5030,7 +5073,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
         private async void SendNotConnectedAsync(CommandContext ctx)
@@ -5041,7 +5084,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendNeedSetupAsync(CommandContext ctx)
         {
@@ -5051,7 +5094,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-         //   DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+         //   // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendNotInAVoiceChannelAsync(CommandContext ctx)
         {
@@ -5061,7 +5104,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendQueueIsEmptyAsync(CommandContext ctx)
         {
@@ -5071,7 +5114,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Orange
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendNoPermssionAsync(CommandContext ctx)
         {
@@ -5081,7 +5124,7 @@ namespace LemixDiscordMusikBot.Commands
                 Color = DiscordColor.Red
             };
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private bool CheckHasPermission(CommandContext ctx, role NeededRole, DiscordMember member = null, ulong GuildId = 0)
         {

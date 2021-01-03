@@ -18,7 +18,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
 [assembly: System.Reflection.AssemblyProductAttribute("Discord Music Bot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LemixDiscordMusikBot")]
-[assembly: System.Reflection.AssemblyVersionAttribute("2.0.*")]
+[assembly: System.Reflection.AssemblyVersionAttribute("2.1.*")]
 
 // Von der MSBuild WriteCodeFragment-Klasse generiert.
 

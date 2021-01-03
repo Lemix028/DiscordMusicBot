@@ -194,8 +194,8 @@ namespace LemixDiscordMusikBot
                 return;
             }
 
-            e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
-           
+          //  e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
+           //because of spam disbaled
         }
 
         private Task OnCommandExecuted(CommandsNextExtension s, CommandExecutionEventArgs e)
