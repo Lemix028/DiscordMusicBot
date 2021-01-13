@@ -315,8 +315,14 @@ namespace LemixDiscordMusikBot.Commands
             double DiscordBotRAM = currentSystemUsage.getRAM();
             double LavalinkCPU = LavaStats.CpuLavalinkLoad;
             long LavalinkRAM = LavaStats.RamUsed;
-
-            SystemUsageLog.Add(LogDate, new SystemUsageItem(Ping, DiscordBotCPU, DiscordBotRAM, LavalinkCPU, LavalinkRAM));
+            try
+            {
+                SystemUsageLog.Add(LogDate, new SystemUsageItem(Ping, DiscordBotCPU, DiscordBotRAM, LavalinkCPU, LavalinkRAM));
+            }catch(Exception ex)
+            {
+                ctx.Client.Logger.LogError(ex.ToString());
+            }
+           
         }
 
         private async void Statistic(object sender, ElapsedEventArgs e, CommandContext ctx, int lastHour)
@@ -1258,7 +1264,7 @@ namespace LemixDiscordMusikBot.Commands
         }*/
 
         //Reworked Setup
-        [Command("setup"), Description("3Setup the text channel.")]
+        [Command("setup"), Description("3Setup the text channel.\nAdministration rights are *required* for the user. \nThe bot *needs* rights to manage the channels.")]
         [RequireBotPermissions(Permissions.ManageChannels)]
         public async Task SetupAsync(CommandContext ctx)
         {
@@ -1384,8 +1390,9 @@ namespace LemixDiscordMusikBot.Commands
                 :track_next: Skip the song.
                 :arrows_counterclockwise: Switch between the loop modes.
                 :twisted_rightwards_arrows: Shuffle the queue.
-                :star: Add the current song to your private playlist.
-                :x: Remove the current song from your private playlist.");
+                :star: Add the current song to the server playlist.
+                :x: Remove the current song from the server playlist.
+                :regional_indicator_l: Load the server playlist.");
             }
             catch (UnauthorizedException)
             {
@@ -4407,11 +4414,6 @@ namespace LemixDiscordMusikBot.Commands
                 await HelpAsync(ctx);
                 return;
             }
-            if (CheckHasCooldown(ctx))
-            {
-                SendCooldownAsync(ctx);
-                return;
-            }
             if (CheckHasPermission(ctx, role.everyone))
                 return;
             Dictionary<String, Command> UnfilteredCommands = new Dictionary<string, Command>();
@@ -4438,6 +4440,11 @@ namespace LemixDiscordMusikBot.Commands
                      Color = DiscordColor.Red
                  };
                  await ctx.RespondAsync(embed: NotFoundEmbed);*/
+            }
+            if (CheckHasCooldown(ctx))
+            {
+                SendCooldownAsync(ctx);
+                return;
             }
             String AliasesText = String.Empty;
             foreach (String entry in cmd.First().Aliases)
@@ -4496,7 +4503,7 @@ namespace LemixDiscordMusikBot.Commands
             //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
 
-        [Command("credits"), Description("1")]
+        [Command("credits"), Description("1Some information about the bot and the team.")]
         public async Task CreditsAsync(CommandContext ctx)
         {
             //if (!DeletePool.ContainsKey(ctx.Message.Id))
@@ -4515,17 +4522,21 @@ namespace LemixDiscordMusikBot.Commands
                 Title = "Credits",
                 Color = DiscordColor.Blurple
             };
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;
+            DateTime buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
             var lemix = await ctx.Client.GetUserAsync(267645496020041729);
             var michi = await ctx.Client.GetUserAsync(352508207094038538);
             CreditsEmbed.AddField("Developer", lemix.Mention, true);
             CreditsEmbed.AddField("Distribution and Marketing", michi.Mention, true);
-            CreditsEmbed.AddField("Bot Creation Time", ctx.Client.CurrentApplication.CreationTimestamp.ToString());
+            CreditsEmbed.AddField("Bot Creation Time", ctx.Client.CurrentApplication.CreationTimestamp.ToString("dd.MM.yyyy HH:mm:ss"));
+            CreditsEmbed.AddField("Version", version.ToString(), true);
+            CreditsEmbed.AddField("Build Date", buildDate.ToString(), true);
             CreditsEmbed.WithFooter("This bot is in beta and is constantly being developed.");
             var msg = await ctx.Channel.SendMessageAsync(embed: CreditsEmbed);
             //await Task.Delay(5000);
             //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
-        [Command("ping"), Description("1")]
+        [Command("ping"), Description("1Get the Websocket Latency to the Discord API.")]
         public async Task PingAsync(CommandContext ctx)
         {
             //if (!DeletePool.ContainsKey(ctx.Message.Id))
@@ -4867,6 +4878,7 @@ namespace LemixDiscordMusikBot.Commands
             //}
             else if (track.Uri.AbsoluteUri.Contains("twitch", StringComparison.OrdinalIgnoreCase))
             {
+                //twitch api need oauth to get avatar from channel
                 return null;
             }
             else
