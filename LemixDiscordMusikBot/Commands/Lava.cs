@@ -298,19 +298,19 @@ namespace LemixDiscordMusikBot.Commands
             StatisticTimer.Elapsed += (sender, e) => Statistic(sender, e, ctx, LastHourStatistic); 
             StatisticTimer.Start();
             var SystemUsageTimer = new Timer(1000);
-            SystemUsageTimer.Elapsed += (sender, e) => SystemUsageGetterAsync(sender, e, ctx, LastHourStatistic);
+            SystemUsageTimer.Elapsed += (sender, e) => SystemUsageGetterAsync(sender, e, ctx.Client);
             SystemUsageTimer.Start();
 
             ctx.CommandsNext.UnregisterCommands(ctx.Command);
         }
 
-        private async void SystemUsageGetterAsync(object sender, ElapsedEventArgs e, CommandContext ctx, int lastHourStatistic)
+        private async void SystemUsageGetterAsync(object sender, ElapsedEventArgs e, DiscordClient client)
         {
             SystemUsage currentSystemUsage = await GetUsageAsync();
             var LavaStats = this.Lavalink.Statistics;
 
             DateTime LogDate = DateTime.Now;
-            int Ping = ctx.Client.Ping;
+            int Ping = client.Ping;
             double DiscordBotCPU = currentSystemUsage.getCPU();
             double DiscordBotRAM = currentSystemUsage.getRAM();
             double LavalinkCPU = LavaStats.CpuLavalinkLoad;
@@ -320,7 +320,7 @@ namespace LemixDiscordMusikBot.Commands
                 SystemUsageLog.Add(LogDate, new SystemUsageItem(Ping, DiscordBotCPU, DiscordBotRAM, LavalinkCPU, LavalinkRAM));
             }catch(Exception ex)
             {
-                ctx.Client.Logger.LogError(ex.ToString());
+                client.Logger.LogError(ex.ToString());
             }
            
         }
@@ -3691,7 +3691,7 @@ namespace LemixDiscordMusikBot.Commands
                         await ctx.RespondAsync($"`{track.Title}` by `{track.Author}`.").ConfigureAwait(false);
                 }
                 */
-        [Command("equalizer"), Description("2Resets equalizer settings.|Sets equalizer settings."), Aliases("eq")]
+        [Command("equalizer"), Description("2Resets equalizer settings.|Sets equalizer settings.\nBand: 0-14\nGain: -0.25 (muted) up to +1.0 (+0.25 means the band is doubled)\n*Presets are planned.*"), Aliases("eq")]
         public async Task EqualizerAsync(CommandContext ctx)
         {
             //if (!DeletePool.ContainsKey(ctx.Message.Id))
@@ -4261,7 +4261,7 @@ namespace LemixDiscordMusikBot.Commands
 
         }
 
-        [Command("support"), Description("1To get support.")]
+        [Command("support"), Description("1If you have a problem, questions or just ideas, you can write us.")]
         public async Task SupportAsync(CommandContext ctx)
         {
             //if (!DeletePool.ContainsKey(ctx.Message.Id))
@@ -4304,15 +4304,15 @@ namespace LemixDiscordMusikBot.Commands
             }
             if (CheckHasPermission(ctx, role.everyone))
                 return;
-            DiscordEmbedBuilder CreditsEmbed = new DiscordEmbedBuilder
+            DiscordEmbedBuilder InviteEmbed = new DiscordEmbedBuilder
             {
                 Title = "Invitation Link",
                 Color = DiscordColor.Purple,
                 Description = "The link is there to invite the bot to other servers."
             };
-            CreditsEmbed.AddField("Link", $"[Click here](https://discord.com/oauth2/authorize?client_id={ctx.Client.CurrentUser.Id}&permissions=3271760&scope=bot)");
-            CreditsEmbed.WithFooter("This bot is in beta and is constantly being developed.");
-            var msg = await ctx.Channel.SendMessageAsync(embed: CreditsEmbed);
+            InviteEmbed.AddField("Link", $"[Click here](https://discord.com/oauth2/authorize?client_id={ctx.Client.CurrentUser.Id}&permissions=3271760&scope=bot)");
+            InviteEmbed.WithFooter("This bot is in beta and is constantly being developed.");
+            var msg = await ctx.Channel.SendMessageAsync(embed: InviteEmbed);
             //await Task.Delay(5000);
             // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }

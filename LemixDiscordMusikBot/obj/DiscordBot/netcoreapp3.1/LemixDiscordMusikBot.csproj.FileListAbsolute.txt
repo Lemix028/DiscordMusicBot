@@ -74,3 +74,4 @@ C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\Disco
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\ConcurrentCollections.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.csprojAssemblyReference.cache
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\RestSharp.dll
+C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\idk.json

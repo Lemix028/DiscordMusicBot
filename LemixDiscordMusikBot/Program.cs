@@ -8,14 +8,15 @@ namespace LemixDiscordMusikBot
 {
     class Program
     {
-
+        public static string[] Arguments;
         public static void Main(string[] args)
         {
-            
+            Arguments = args;
+
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
             DateTime buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
-            string Version = $"{version}p \n   Build Date: ({buildDate})";
-           
+            string Version = $"{version} \n   Build Date: ({buildDate})";
+
             Config NewConfig = new Config();
             NewConfig.Token = "";
             NewConfig.Prefix = new string[] { "!", "?" };
@@ -53,60 +54,77 @@ namespace LemixDiscordMusikBot
         
 
 ");
-                if (!File.Exists("config.json"))
-                {                   
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    try
+                if (args.Length != 0)
+                {
+                    if (File.Exists(args[0]))
                     {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        TextWriter writer = null;
-                        try
-                        {
-                            writer = new StreamWriter("config.json", false);
-                            writer.Write(JsonConvert.SerializeObject(NewConfig, Formatting.Indented));
-                        }
-                        finally
-                        {
-                            if (writer != null)
-                                writer.Close();
-                        }
-                        Console.Write("New config file created!\nPlease change the default values in config.json and restart the bot.\n");
-                        Console.WriteLine("Press any Key to close the Window");
-                        Console.ReadKey();
+                        bot.StartAsync().GetAwaiter().GetResult();
+                        return;
                     }
-                    catch (FileNotFoundException)
+                    else
                     {
                         Console.WriteLine("Config konnte nicht gefunden werden!");
                         Console.WriteLine("Press any Key to close the Window");
                         Console.ReadKey();
                     }
-                    catch (UnauthorizedAccessException)
-                    {
-                        Console.WriteLine("Config kann nicht gelesen werden! Unzureichende Rechte!");
-                        Console.WriteLine("Press any Key to close the Window");
-                        Console.ReadKey();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Unbekannter Fehler beim Lesen der Config! "+ e);
-                        Console.WriteLine("Press any Key to close the Window");
-                        Console.ReadKey();
-                    }
+
                 }
                 else
                 {
-                    bot.StartAsync().GetAwaiter().GetResult();
+                    if (File.Exists("config.json"))
+                    {
+                        bot.StartAsync().GetAwaiter().GetResult();
+                        return;
+                    }
                 }
-                
+
+                Console.ForegroundColor = ConsoleColor.Red;
+                try
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    TextWriter writer = null;
+                    try
+                    {
+                        writer = new StreamWriter("config.json", false);
+                        writer.Write(JsonConvert.SerializeObject(NewConfig, Formatting.Indented));
+                    }
+                    finally
+                    {
+                        if (writer != null)
+                            writer.Close();
+                    }
+                    Console.Write("New config file created!\nPlease change the default values in config.json and restart the bot.\n");
+                    Console.WriteLine("Press any Key to close the Window");
+                    Console.ReadKey();
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.WriteLine("Config konnte nicht gefunden werden!");
+                    Console.WriteLine("Press any Key to close the Window");
+                    Console.ReadKey();
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    Console.WriteLine("Config kann nicht gelesen werden! Unzureichende Rechte!");
+                    Console.WriteLine("Press any Key to close the Window");
+                    Console.ReadKey();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Unbekannter Fehler beim Lesen der Config! " + e);
+                    Console.WriteLine("Press any Key to close the Window");
+                    Console.ReadKey();
+                }
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(e.Message);
                 Console.WriteLine("Press any Key to close the Window");
                 Console.ReadKey();
             }
-           
+
         }
     }
 }

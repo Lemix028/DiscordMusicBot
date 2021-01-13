@@ -41,10 +41,18 @@ namespace LemixDiscordMusikBot
             var json = string.Empty;
             try
             {
-                using (var fs = File.OpenRead("config.json"))
-                using (StreamReader sr = new StreamReader(fs, new UTF8Encoding(false)))
-                    json = await sr.ReadToEndAsync().ConfigureAwait(false);
-
+                if (Program.Arguments.Length == 0)
+                {
+                    using (var fs = File.OpenRead("config.json"))
+                    using (StreamReader sr = new StreamReader(fs, new UTF8Encoding(false)))
+                        json = await sr.ReadToEndAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    using (var fs = File.OpenRead(Program.Arguments[0]))
+                    using (StreamReader sr = new StreamReader(fs, new UTF8Encoding(false)))
+                        json = await sr.ReadToEndAsync().ConfigureAwait(false);
+                }
                 configJson = JsonConvert.DeserializeObject<Config>(json);
             }
             catch (FileNotFoundException e)
@@ -104,7 +112,7 @@ namespace LemixDiscordMusikBot
 
             CommandsNextConfiguration commandsConfig = new CommandsNextConfiguration
             {
-   //             StringPrefixes = configJson.Prefix,
+                //             StringPrefixes = configJson.Prefix,
                 EnableDms = false,
                 DmHelp = true,
                 PrefixResolver = ResolvePrefixAsync,
@@ -194,8 +202,8 @@ namespace LemixDiscordMusikBot
                 return;
             }
 
-          //  e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
-           //because of spam disbaled
+            //  e.Context.Client.Logger.LogInformation(new EventId(7777, "CommandError"), $"{e.Context.User.Username} tried executing '{e.Command?.QualifiedName ?? "<unknown command>"}' but it errored: {e.Exception.GetType()}: {e.Exception.Message ?? "<no message>"}");
+            //because of spam disbaled
         }
 
         private Task OnCommandExecuted(CommandsNextExtension s, CommandExecutionEventArgs e)
@@ -304,34 +312,34 @@ namespace LemixDiscordMusikBot
 
 
             try
+            {
+                try
                 {
-                    try
+                    if (s.CurrentUser.Username != configJson.BotUsername)
                     {
-                        if (s.CurrentUser.Username != configJson.BotUsername)
-                        {
-                            await s.UpdateCurrentUserAsync(configJson.BotUsername);
-                            s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username set to '{configJson.BotUsername}'");
+                        await s.UpdateCurrentUserAsync(configJson.BotUsername);
+                        s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username set to '{configJson.BotUsername}'");
                     }
                     else
                     {
                         s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username is already '{configJson.BotUsername}'");
                     }
 
-                    }
-                    catch
-                    {
-                        s.Logger.LogWarning(new EventId(7777, "ClientReady"), "Username cannot be set. Maybe you have reached the limit, try again later.");
-                    }
-
-                    s.Logger.LogInformation(new EventId(7777, "ClientReady"), "Client is ready to process events");
-                    await Task.Factory.StartNew(() => UpdateStatus(s, e));
-
                 }
-                catch (Exception e1)
+                catch
                 {
-                    Console.WriteLine(e1);
+                    s.Logger.LogWarning(new EventId(7777, "ClientReady"), "Username cannot be set. Maybe you have reached the limit, try again later.");
                 }
-                return Task.CompletedTask;
+
+                s.Logger.LogInformation(new EventId(7777, "ClientReady"), "Client is ready to process events");
+                await Task.Factory.StartNew(() => UpdateStatus(s, e));
+
+            }
+            catch (Exception e1)
+            {
+                Console.WriteLine(e1);
+            }
+            return Task.CompletedTask;
 
         }
         private async Task<Task> UpdateStatus(DiscordClient s, ReadyEventArgs e)
