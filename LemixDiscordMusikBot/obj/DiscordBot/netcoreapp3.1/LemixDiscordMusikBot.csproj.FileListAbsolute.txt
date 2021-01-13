@@ -73,3 +73,4 @@ C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\Disco
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\scopedcss\bundle\LemixDiscordMusikBot.styles.css
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\ConcurrentCollections.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.csprojAssemblyReference.cache
+C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\RestSharp.dll

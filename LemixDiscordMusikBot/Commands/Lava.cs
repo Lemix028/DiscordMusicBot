@@ -27,6 +27,7 @@ using System.Management;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using DSharpPlus.Interactivity.Extensions;
+using System.Net.Http;
 
 namespace LemixDiscordMusikBot.Commands
 {
@@ -709,7 +710,7 @@ namespace LemixDiscordMusikBot.Commands
                             result.Result.Guild.Members.TryGetValue(result.Result.User.Id, out DiscordMember member);
                             if (CheckHasCooldown(ctx, GuildId))
                             {
-                                SendCooldownAsync(ctx);
+                                //SendCooldownAsync(ctx);
                                 continue;
                             }
                             if (CheckHasPermission(ctx, role.everyone, member, GuildId))
@@ -1106,7 +1107,6 @@ namespace LemixDiscordMusikBot.Commands
         }
         */
 
-
         /*  [Command("setup"), Description("Setup.")]
         [RequireBotPermissions(Permissions.ManageChannels)]
         [RequirePermissions(Permissions.Administrator)]
@@ -1260,7 +1260,6 @@ namespace LemixDiscordMusikBot.Commands
         //Reworked Setup
         [Command("setup"), Description("3Setup the text channel.")]
         [RequireBotPermissions(Permissions.ManageChannels)]
-        [RequireUserPermissions(Permissions.Administrator)]
         public async Task SetupAsync(CommandContext ctx)
         {
            //if (!DeletePool.ContainsKey(ctx.Message.Id))
@@ -1699,8 +1698,8 @@ namespace LemixDiscordMusikBot.Commands
      
         //Queue with uri
 
-        [Command("play"), Description("1Add a song to the queue with a URL.|Add a song to the queue with a Keywords."), Aliases("p")]
-        public async Task QueueAsync(CommandContext ctx, [Description("Youtube, Soundcloud, Twitch, Vimeo Links.\nTwitch Livestream support.")] Uri Url) {
+        [Command("play"), Description("1Add a song to the queue with a URL.\n*Youtube, Twitch, Vimeo Links.*\n*Only Twitch Livestream support.*|Add a song to the queue with a Keywords.\n*Youtube videos only.*"), Aliases("p")]
+        public async Task QueueAsync(CommandContext ctx, [Description("Youtube, Twitch, Vimeo Links.\nOnly Twitch Livestream support.")] Uri Url) {
            // if (!DeletePool.ContainsKey(ctx.Message.Id))
             //    // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
@@ -1789,12 +1788,12 @@ namespace LemixDiscordMusikBot.Commands
             notfoundembed.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
             LavalinkGuildConnection VoiceConnection;
             VoiceConnections.TryGetValue(ctx.Guild.Id, out VoiceConnection);
-
-            if (Url.ToString().Contains("soundcloud") == true)
+            // SOUNDCLOUD API ist schmutz
+            if (Url.ToString().Contains("soundcloud"))
             {
-                trackLoad = await this.Lavalink.Rest.GetTracksAsync(Url.ToString(), LavalinkSearchType.SoundCloud);
-                if (trackLoad.Tracks.Count() == 0)
-                {
+               // trackLoad = await this.Lavalink.Rest.GetTracksAsync(Url.ToString(), LavalinkSearchType.SoundCloud);
+               // if (trackLoad.Tracks.Count() == 0)
+               // {
                     var nfmsg = await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
                     try
                     {
@@ -1802,22 +1801,28 @@ namespace LemixDiscordMusikBot.Commands
                     }
                     catch { }
                     return;
-                }
-                TrackLoadPlaylists[ctx.Guild.Id].Add(trackLoad.Tracks.First());
+              //  }
+              //  TrackLoadPlaylists[ctx.Guild.Id].Add(trackLoad.Tracks.First());
             }
             else
             {
                 trackLoad = await this.Lavalink.Rest.GetTracksAsync(Url);
                 if (trackLoad.Tracks.Count() == 0)
                 {
-                    var nfmsg = await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
-                    
-                    try
+                 //   trackLoad = await this.Lavalink.Rest.GetTracksAsync(Url.ToString(), LavalinkSearchType.SoundCloud);
+                  //  if (trackLoad.Tracks.Count() == 0) {
+                        await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
+                        return;
+                 //   }                   
+                }
+                if (Url.ToString().Contains("twitch"))
+                {
+                    DiscordEmbedBuilder deb = new DiscordEmbedBuilder
                     {
-                        // DeletePool.Add(nfmsg.Id, new DeleteMessage(ctx.Channel, nfmsg));
-                    }
-                    catch { }
-                    return;
+                        Color = DiscordColor.Blurple,
+                        Description = "Twitch livestreams need a little more time!\nDont worry."
+                    };
+                    await ctx.RespondAsync(embed: deb).ConfigureAwait(false);
                 }
                 TrackLoadPlaylists[ctx.Guild.Id].Add(trackLoad.Tracks.First());
             }
@@ -3117,9 +3122,9 @@ namespace LemixDiscordMusikBot.Commands
             await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange);
 
         }
-
+        /*
         //Get current Lyrics
-        /*[Command("lyrics"), Description("Zeigt die Lyrics an.")]
+        [Command("lyrics"), Description("Zeigt die Lyrics an.")]
         public async Task LyricsAsync(CommandContext ctx)
         {
             LavalinkGuildConnection VoiceConnection;
@@ -3127,28 +3132,60 @@ namespace LemixDiscordMusikBot.Commands
 
             if (VoiceConnection == null)
                 return;
-
-
             if (VoiceConnection.CurrentState.CurrentTrack == null)
                 return;
 
+         
 
-            var lyricsService = new LyricsService(new LyricsOptions());
-
-            var title = VoiceConnection.CurrentState.CurrentTrack.Title.Replace("(Official Video)", String.Empty);
-
-            title = title.Replace(VoiceConnection.CurrentState.CurrentTrack.Author, String.Empty);
-
-            var lyrics = await lyricsService.GetLyricsAsync(Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(VoiceConnection.CurrentState.CurrentTrack.Author)).Replace("?", String.Empty), Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(title)).Replace("?", String.Empty));
-
-            if (lyrics == null)
+            try
             {
-                await ctx.RespondAsync($"Lyrics not found.").ConfigureAwait(false);
-                return;
-            }
-            await ctx.RespondAsync($"`{VoiceConnection.CurrentState.CurrentTrack.Title}` von `{VoiceConnection.CurrentState.CurrentTrack.Author}`:\n`{lyrics}`").ConfigureAwait(false);
-        }
 
+                var baseAddress = new Uri("https://api.musixmatch.com/ws/1.1/");
+
+                using (var httpClient = new HttpClient { BaseAddress = baseAddress })
+                {
+                    Console.WriteLine(VoiceConnection.CurrentState.CurrentTrack.Author);
+                    Console.WriteLine(VoiceConnection.CurrentState.CurrentTrack.Title);
+                    using (var response = await httpClient.GetAsync("Coldplay/Adventure%20of%20a%20Lifetime"))
+                    {
+
+                        string responseData = await response.Content.ReadAsStringAsync();
+                        Console.WriteLine(responseData);
+                    }
+                }
+                //using (HttpClient httpclient = new HttpClient())
+                //{
+                //    Console.WriteLine(VoiceConnection.CurrentState.CurrentTrack.Author);
+                //    Console.WriteLine(VoiceConnection.CurrentState.CurrentTrack.Title);
+                //    Console.WriteLine($"https://api.lyrics.ovh/v1/{VoiceConnection.CurrentState.CurrentTrack.Author}/{VoiceConnection.CurrentState.CurrentTrack.Title}");
+                //    var content = await httpclient.GetStringAsync($"https://api.lyrics.ovh/v1/{VoiceConnection.CurrentState.CurrentTrack.Author}/{VoiceConnection.CurrentState.CurrentTrack.Title}");
+                //    Console.WriteLine(content);
+                //}
+               
+               
+
+            }
+            catch
+            {
+               
+            }
+
+            
+
+         //   var title = VoiceConnection.CurrentState.CurrentTrack.Title.Replace("(Official Video)", String.Empty);
+
+         //   title = title.Replace(VoiceConnection.CurrentState.CurrentTrack.Author, String.Empty);
+
+          //  var lyrics = await lyricsService.GetLyricsAsync(Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(VoiceConnection.CurrentState.CurrentTrack.Author)).Replace("?", String.Empty), Encoding.ASCII.GetString(Encoding.ASCII.GetBytes(title)).Replace("?", String.Empty));
+
+         //   if (lyrics == null)
+       //     {
+        //        await ctx.RespondAsync($"Lyrics not found.").ConfigureAwait(false);
+        //        return;
+        //    }
+        //    await ctx.RespondAsync($"`{VoiceConnection.CurrentState.CurrentTrack.Title}` von `{VoiceConnection.CurrentState.CurrentTrack.Author}`:\n`{lyrics}`").ConfigureAwait(false);
+        }
+/*
         //Get Lyrics by Keyword
         [Command, Description("Zeigt die Lyrics eines bestimmtes Liedes an.")]
         public async Task LyricsAsync(CommandContext ctx, [Description("Schlüsselwörter"), RemainingText]String Keywords)
@@ -3158,6 +3195,7 @@ namespace LemixDiscordMusikBot.Commands
 
             if (VoiceConnection == null)
                 return;
+
 
             var lyricsService = new LyricsService(new LyricsOptions());
 
@@ -4823,12 +4861,19 @@ namespace LemixDiscordMusikBot.Commands
                     return thumbnailurl;
                 }
             }
-            else if (track.Uri.AbsoluteUri.Contains("soundcloud", StringComparison.OrdinalIgnoreCase))
-                throw new NotImplementedException();
+            //else if (track.Uri.AbsoluteUri.Contains("soundcloud", StringComparison.OrdinalIgnoreCase))
+            //{
+            //    return null;
+            //}
             else if (track.Uri.AbsoluteUri.Contains("twitch", StringComparison.OrdinalIgnoreCase))
-                throw new NotImplementedException();
+            {
+                return null;
+            }
             else
-                throw new NotImplementedException();
+            {
+                return null;
+            }
+
         }
         private int getQueueCount(ulong GuildId)
         {
@@ -4974,7 +5019,6 @@ namespace LemixDiscordMusikBot.Commands
      
             return result;
         }
-
         private static String GetComponent(string hwclass, string syntax)
         {
             ManagementObjectSearcher mos = new ManagementObjectSearcher("root\\CIMV2", "SELECT * FROM " + hwclass);
@@ -4985,7 +5029,6 @@ namespace LemixDiscordMusikBot.Commands
             }
             return "N/A";
         }
-
         private Boolean CheckHasCooldown(CommandContext ctx, ulong GuildId = 0)
         {
             if(GuildId == 0)
@@ -5031,8 +5074,7 @@ namespace LemixDiscordMusikBot.Commands
             }
 
         }
-
-        private async void SendCooldownAsync(CommandContext ctx)
+        private async void SendCooldownAsync(CommandContext ctx, ulong GuildId = 0)
         {
             var cooldownembed = new DiscordEmbedBuilder
             {
@@ -5040,6 +5082,25 @@ namespace LemixDiscordMusikBot.Commands
                 Description = "Please be patient.",
                 Color = DiscordColor.Orange
             };
+            if(GuildId != 0)
+            {
+                Task<DiscordChannel> result = null;
+                try
+                {
+                    result = ctx.Client.GetChannelAsync(GuildId);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+                
+                if(result.Result != null)
+                {
+                    await result.Result.SendMessageAsync(embed: cooldownembed);
+                }
+                return;
+            }
+            
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: cooldownembed);
             //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
@@ -5075,7 +5136,6 @@ namespace LemixDiscordMusikBot.Commands
             DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
             // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
-
         private async void SendNotConnectedAsync(CommandContext ctx)
         {
             var SendNotInSameChannelEmbed = new DiscordEmbedBuilder

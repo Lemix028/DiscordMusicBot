@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "KBY5Tq+IC+gBI2DR4RzA5ctxuatI2iw21/Nv+bTChr9uqRbeVX1MY01FTXRW5DMwKrQmF2VwMYPKTBI6B0Q1og==",
+  "dgSpecHash": "k1c39Y3rb0wzPtlZSCFShNBgdEGFl35u98omSS+pao+9emFDG1Tog5vCI5EQKV78/sGtcqMABgIqC3mhLcnIqg==",
   "success": true,
   "projectFilePath": "C:\\Users\\Marvin\\source\\repos\\LemixDiscordMusikBot\\LemixDiscordMusikBot\\LemixDiscordMusikBot.csproj",
   "expectedPackageFiles": [
@@ -32,6 +32,7 @@
     "C:\\Users\\Marvin\\.nuget\\packages\\mysql.data\\8.0.22\\mysql.data.8.0.22.nupkg.sha512",
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder\\netstandard.library\\1.6.1\\netstandard.library.1.6.1.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\newtonsoft.json\\12.0.3\\newtonsoft.json.12.0.3.nupkg.sha512",
+    "C:\\Users\\Marvin\\.nuget\\packages\\restsharp\\106.11.7\\restsharp.106.11.7.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.debian.8-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.fedora.23-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
     "C:\\Users\\Marvin\\.nuget\\packages\\runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl\\4.3.2\\runtime.fedora.24-x64.runtime.native.system.security.cryptography.openssl.4.3.2.nupkg.sha512",
