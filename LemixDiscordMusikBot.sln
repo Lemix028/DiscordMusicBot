@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LemixDiscordMusikBot", "Lem
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiscordBot", "DiscordBot", "{07C12EF2-6516-4C31-B39E-233738D519D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BotApi", "BotApi\BotApi.csproj", "{F3599CC2-9247-44C8-91BE-76D8D5DA9F3E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,12 +20,6 @@ Global
 		{7805CB23-6AEF-4901-A7D0-4EA40A73D0D2}.DiscordBot|Any CPU.Build.0 = DiscordBot|Any CPU
 		{7805CB23-6AEF-4901-A7D0-4EA40A73D0D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7805CB23-6AEF-4901-A7D0-4EA40A73D0D2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F3599CC2-9247-44C8-91BE-76D8D5DA9F3E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F3599CC2-9247-44C8-91BE-76D8D5DA9F3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F3599CC2-9247-44C8-91BE-76D8D5DA9F3E}.DiscordBot|Any CPU.ActiveCfg = Debug|Any CPU
-		{F3599CC2-9247-44C8-91BE-76D8D5DA9F3E}.DiscordBot|Any CPU.Build.0 = Debug|Any CPU
-		{F3599CC2-9247-44C8-91BE-76D8D5DA9F3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F3599CC2-9247-44C8-91BE-76D8D5DA9F3E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,9 +10,13 @@
     <Product>Discord Music Bot</Product>
     <Copyright>Lemix</Copyright>
     <Company />
-    <AssemblyVersion>2.1.*</AssemblyVersion>
+    <AssemblyVersion>2.2.*</AssemblyVersion>
     <Deterministic>false</Deterministic>
-    <FileVersion>2.0.0.0</FileVersion>
+    <FileVersion>2.2.0.0</FileVersion>
+    <SignAssembly>false</SignAssembly>
+    <Version>2.2</Version>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <NeutralLanguage>Englisch</NeutralLanguage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -31,7 +35,7 @@
     <OutputPath>bin\DiscordBot\</OutputPath>
     <PublishReadyToRun>true</PublishReadyToRun>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
-    <DebugType>portable</DebugType>
+    <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DefineConstants>TRACE</DefineConstants>
@@ -52,10 +56,6 @@
 
   <ItemGroup>
     <PackageReference Include="AngleSharp" Version="1.0.0-alpha-844" />
-    <PackageReference Include="Costura.Fody" Version="5.0.0-alpha0281">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="DSharpPlus" Version="4.0.0-rc1" />
     <PackageReference Include="DSharpPlus.CommandsNext" Version="4.0.0-rc1" />
     <PackageReference Include="DSharpPlus.Interactivity" Version="4.0.0-rc1" />

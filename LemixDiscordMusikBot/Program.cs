@@ -54,6 +54,7 @@ namespace LemixDiscordMusikBot
         
 
 ");
+                Console.ForegroundColor = ConsoleColor.Gray;
                 if (args.Length != 0)
                 {
                     if (File.Exists(args[0]))

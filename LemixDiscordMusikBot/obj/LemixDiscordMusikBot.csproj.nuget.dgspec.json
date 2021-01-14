@@ -5,7 +5,7 @@
   },
   "projects": {
     "C:\\Users\\Marvin\\source\\repos\\LemixDiscordMusikBot\\LemixDiscordMusikBot\\LemixDiscordMusikBot.csproj": {
-      "version": "1.0.0",
+      "version": "2.2.0",
       "restore": {
         "projectUniqueName": "C:\\Users\\Marvin\\source\\repos\\LemixDiscordMusikBot\\LemixDiscordMusikBot\\LemixDiscordMusikBot.csproj",
         "projectName": "LemixDiscordMusikBot",
@@ -49,12 +49,6 @@
             "AngleSharp": {
               "target": "Package",
               "version": "[1.0.0-alpha-844, )"
-            },
-            "Costura.Fody": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[5.0.0-alpha0281, )"
             },
             "DSharpPlus": {
               "target": "Package",

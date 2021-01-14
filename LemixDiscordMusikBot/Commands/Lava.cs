@@ -65,7 +65,7 @@ namespace LemixDiscordMusikBot.Commands
         public Dictionary<ulong, List<LavalinkTrack>> TrackLoadPlaylists = new Dictionary<ulong, List<LavalinkTrack>>();
         public Dictionary<ulong, int> CurrentSong = new Dictionary<ulong, int>();
 
-        enum loopmode
+        public enum loopmode
         {
             off,
             loopqueue,
@@ -584,7 +584,7 @@ namespace LemixDiscordMusikBot.Commands
                 if (!BotChannelBannerMessages.ContainsKey(GuildId))
                 {
                     // Need final rework maybe integrated
-                 //   fs = File.OpenRead(System.Environment.CurrentDirectory + @"/pics/banner.png");
+                    //   fs = File.OpenRead(System.Environment.CurrentDirectory + @"/pics/banner.png");
                     BannerMsg = await chn.SendMessageAsync(configJson.BannerPicture);
                     BotChannelBannerMessages.Add(GuildId, BannerMsg.Id);
                 }
@@ -599,7 +599,10 @@ namespace LemixDiscordMusikBot.Commands
                             DeletePool.Add(BannerMsg.Id, new DeleteMessage(BannerMsg.Channel, BannerMsg));
                             BannerMsg = await chn.SendMessageAsync(configJson.BannerPicture);
                             BotChannelBannerMessages.Add(GuildId, BannerMsg.Id);
-                        } catch { return; }
+                        } catch(Exception e) {
+                            ctx.Client.Logger.LogError(GuildId + " Bot Channel cannot rebuild! " + e.ToString());
+                            return;
+                        }
                     }
                     else
                     {
@@ -659,7 +662,10 @@ namespace LemixDiscordMusikBot.Commands
                             await MainMsg.CreateReactionAsync(l_char);
                             BotChannelMainMessages.Add(GuildId, MainMsg.Id);
                         }
-                        catch { return; }
+                        catch(Exception e) {
+                            ctx.Client.Logger.LogError(GuildId + " Bot Channel cannot rebuild! " + e.ToString());
+                            return;
+                        }
                     }
                     else
                     {
@@ -951,6 +957,8 @@ namespace LemixDiscordMusikBot.Commands
 
                 ctx.Client.Logger.LogCritical(new EventId(7780, "Botchannel"), e.ToString());
             }
+            // restart task if something errored
+            await BotChannel(ctx, GuildId);
         }
         private async Task VoiceConnection_PlaybackFinished(LavalinkGuildConnection s, TrackFinishEventArgs e)
         {
@@ -1724,6 +1732,11 @@ namespace LemixDiscordMusikBot.Commands
                 SendRestrictedChannelAsync(ctx);
                 return;
             }
+            if (ctx.Member.VoiceState?.Channel == null)
+            {
+                SendNotInAVoiceChannelAsync(ctx);
+                return;
+            }
             await JoinAsync(ctx, ctx.Member.VoiceState?.Channel);
             if (await CheckIsBotChannelAndMessagesExits(ctx))
                 return;
@@ -2022,6 +2035,11 @@ namespace LemixDiscordMusikBot.Commands
                     SendRestrictedChannelAsync(ctx);
                     return;
                 }
+                if(ctx.Member.VoiceState?.Channel == null)
+                {
+                    SendNotInAVoiceChannelAsync(ctx);
+                    return;
+                }
                 await JoinAsync(ctx, ctx.Member.VoiceState?.Channel);
                 if (await CheckIsBotChannelAndMessagesExits(ctx))
                     return;
@@ -2096,8 +2114,7 @@ namespace LemixDiscordMusikBot.Commands
             }
             catch (Exception e)
             {
-                ctx.Client.Logger.LogError(new EventId(7780, "play"), e.Message);
-                
+                ctx.Client.Logger.LogError(new EventId(7780, "Play"), e.Message);      
             }
 
         }
@@ -4278,7 +4295,7 @@ namespace LemixDiscordMusikBot.Commands
             DiscordEmbedBuilder CreditsEmbed = new DiscordEmbedBuilder
             {
                 Title = "Support",
-                Color = DiscordColor.Blurple,
+                Color = DiscordColor.DarkGreen,
                 Description = "To get support you can simply write to us."
             };
             var lemix = await ctx.Client.GetUserAsync(267645496020041729);
@@ -4343,7 +4360,8 @@ namespace LemixDiscordMusikBot.Commands
                 return;
             DiscordEmbedBuilder HelpEmbed = new DiscordEmbedBuilder
             {
-                Title = "Help Command"
+                Title = "Help Command",
+                Color = DiscordColor.Orange
             };
             HelpEmbed.WithFooter($"With '{ctx.Prefix}{ctx.Command.Name} [Command]' you get detailed informations");
             String EveryoneCommands = string.Empty;
@@ -4463,7 +4481,8 @@ namespace LemixDiscordMusikBot.Commands
             DiscordEmbedBuilder HelpEmbed = new DiscordEmbedBuilder
             {
                 Title = $"Help Command: {cmd.First().Name}",
-                Description = $"Aliases: {AliasesText}"
+                Description = $"Aliases: {AliasesText}",
+                Color = DiscordColor.Orange
             };
 
             int i = 0;
@@ -4520,7 +4539,7 @@ namespace LemixDiscordMusikBot.Commands
             DiscordEmbedBuilder CreditsEmbed = new DiscordEmbedBuilder
             {
                 Title = "Credits",
-                Color = DiscordColor.Blurple
+                Color = DiscordColor.Orange
             };
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
             DateTime buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);

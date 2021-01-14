@@ -4,10 +4,8 @@ C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\Disco
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.runtimeconfig.json
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.runtimeconfig.dev.json
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.dll
-C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.pdb
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\AngleSharp.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\BouncyCastle.Crypto.dll
-C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\Costura.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\DSharpPlus.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\DSharpPlus.CommandsNext.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\DSharpPlus.Interactivity.dll
@@ -53,7 +51,6 @@ C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\Disco
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\staticwebassets\LemixDiscordMusikBot.StaticWebAssets.Manifest.cache
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\staticwebassets\LemixDiscordMusikBot.StaticWebAssets.xml
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.dll
-C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.pdb
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.genruntimeconfig.cache
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\System.Drawing.Common.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.csproj.CoreCompileInputs.cache
@@ -69,9 +66,6 @@ C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\Disco
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\runtimes\unix\lib\netcoreapp2.1\System.Security.Principal.Windows.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\runtimes\win\lib\netcoreapp2.1\System.Security.Principal.Windows.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\runtimes\win\lib\netcoreapp3.0\System.Windows.Extensions.dll
-C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.csproj.Fody.CopyLocal.cache
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\scopedcss\bundle\LemixDiscordMusikBot.styles.css
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\ConcurrentCollections.dll
-C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\obj\DiscordBot\netcoreapp3.1\LemixDiscordMusikBot.csprojAssemblyReference.cache
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\RestSharp.dll
-C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\idk.json

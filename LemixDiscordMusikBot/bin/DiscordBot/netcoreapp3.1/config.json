@@ -3,7 +3,7 @@
   "prefix": ["!", "?"],
   "BotUsername": "Botname",
   "LavalinkServerIP": "localhost",
-  "LavalinkServerPort": 2334,
+  "LavalinkServerPort": 2333,
   "LavalinkServerPassword": "youshallnotpass",
   "DatabaseHostname": "localhost",
   "DatabaseDbName": "dbot",

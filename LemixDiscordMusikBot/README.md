@@ -6,6 +6,8 @@
 - NoSongPicture --> URL of a picture
 - DefaultVolume --> default volume (0-1000)
 
+Start Parameters:
+- Config path string (OPTIONAL) ex. config2.json or "C:\Users\{USER}\Desktop\Configs\secondconfig.json"
 
         StatusTypes:
         //
