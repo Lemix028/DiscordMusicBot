@@ -1725,7 +1725,7 @@ namespace LemixDiscordMusikBot.Commands
 
         //Queue with uri
 
-        [Command("play"), Description("1Add a song or playlist to the queue with a URL.*Maximum 500 songs per playlist are loaded.*\n*Youtube, Twitch, Vimeo Links.*\n*Only Twitch Livestream support.*|Search for a term and choose a song from a maximum of five.\n*Youtube videos only.*"), Aliases("p")]
+        [Command("play"), Description("1Add a song or playlist to the queue with a URL.\n*Maximum 500 songs per playlist are loaded.*\n*Youtube, Twitch, Vimeo Links.*\n*Only Twitch Livestream support.*|Search for a term and choose a song from a maximum of five.\n*Youtube videos only.*"), Aliases("p")]
         public async Task QueueAsync(CommandContext ctx, [Description("Youtube, Twitch, Vimeo Links.\nOnly Twitch Livestream support.")] Uri Url)
         {
             // if (!DeletePool.ContainsKey(ctx.Message.Id))
