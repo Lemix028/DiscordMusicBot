@@ -15,10 +15,10 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("DiscordBot")]
 [assembly: System.Reflection.AssemblyCopyrightAttribute("Lemix")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("2.2.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.4")]
 [assembly: System.Reflection.AssemblyProductAttribute("Discord Music Bot")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LemixDiscordMusikBot")]
-[assembly: System.Reflection.AssemblyVersionAttribute("2.3.*")]
+[assembly: System.Reflection.AssemblyVersionAttribute("2.4.*")]
 [assembly: System.Resources.NeutralResourcesLanguageAttribute("Englisch")]
 
 // Von der MSBuild WriteCodeFragment-Klasse generiert.

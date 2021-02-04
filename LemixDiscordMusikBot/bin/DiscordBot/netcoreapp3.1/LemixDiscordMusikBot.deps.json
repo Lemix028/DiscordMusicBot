@@ -21,7 +21,7 @@
   },
   "targets": {
     ".NETCoreApp,Version=v3.1": {
-      "LemixDiscordMusikBot/2.2": {
+      "LemixDiscordMusikBot/2.4": {
         "dependencies": {
           "AngleSharp": "1.0.0-alpha-844",
           "DSharpPlus": "4.0.0-rc1",
@@ -3133,7 +3133,7 @@
     }
   },
   "libraries": {
-    "LemixDiscordMusikBot/2.2": {
+    "LemixDiscordMusikBot/2.4": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
