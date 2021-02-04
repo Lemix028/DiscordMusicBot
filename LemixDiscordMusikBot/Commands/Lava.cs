@@ -317,8 +317,12 @@ namespace LemixDiscordMusikBot.Commands
             long LavalinkRAM = LavaStats.RamUsed;
             try
             {
-                if (!SystemUsageLog.ContainsKey(LogDate))
-                    SystemUsageLog.Add(LogDate, new SystemUsageItem(Ping, DiscordBotCPU, DiscordBotRAM, LavalinkCPU, LavalinkRAM));
+                lock (SystemUsageLog)
+                {
+                    if (!SystemUsageLog.ContainsKey(LogDate))
+                        SystemUsageLog.Add(LogDate, new SystemUsageItem(Ping, DiscordBotCPU, DiscordBotRAM, LavalinkCPU, LavalinkRAM));
+                }
+          
             }
             catch (Exception ex)
             {
@@ -332,36 +336,41 @@ namespace LemixDiscordMusikBot.Commands
         {
             if (lastHour < DateTime.Now.Hour || (lastHour == 23 && DateTime.Now.Hour == 0))
             {
-                LastHourStatistic = DateTime.Now.Hour;
-                SystemUsage currentSystemUsage = await GetUsageAsync();
-                var LavaStats = this.Lavalink.Statistics;
-
-                DateTime LogDate = DateTime.Now;
-                int GuildCount = ctx.Client.Guilds.Count;
-                int ActiveShards = ctx.Client.ShardCount;
-                TimeSpan DiscordBotUptime = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
-                TimeSpan LavalinkUptime = LavaStats.Uptime;
-                int LavalinkPlayersTotal = LavaStats.TotalPlayers;
-                int LavalinkPlayersActive = LavaStats.ActivePlayers;
-                List<KeyValuePair<DateTime, SystemUsageItem>> TempSystemUsageLog = SystemUsageLog.ToList();
-                SystemUsageLog.Clear();
-                List<int> PingItems = new List<int>();
-                List<double> DiscordBotCPUItems = new List<double>();
-                List<double> DiscordBotRAMItems = new List<double>();
-                List<double> LavalinkCPUItems = new List<double>();
-                List<long> LavalinkRAMItems = new List<long>();
-                foreach (KeyValuePair<DateTime, SystemUsageItem> entry in TempSystemUsageLog.ToList())
-                {
-                    if ((LogDate - TimeSpan.FromHours(1)) < entry.Key)
+               
+                    LastHourStatistic = DateTime.Now.Hour;
+                    SystemUsage currentSystemUsage = await GetUsageAsync();
+                    var LavaStats = this.Lavalink.Statistics;
+                    DateTime LogDate = DateTime.Now;
+                    int GuildCount = ctx.Client.Guilds.Count;
+                    int ActiveShards = ctx.Client.ShardCount;
+                    TimeSpan DiscordBotUptime = DateTime.UtcNow - Process.GetCurrentProcess().StartTime.ToUniversalTime();
+                    TimeSpan LavalinkUptime = LavaStats.Uptime;
+                    int LavalinkPlayersTotal = LavaStats.TotalPlayers;
+                    int LavalinkPlayersActive = LavaStats.ActivePlayers;
+                    List<KeyValuePair<DateTime, SystemUsageItem>> TempSystemUsageLog = null;
+                    lock (SystemUsageLog)
                     {
-                        PingItems.Add(entry.Value.Ping);
-                        DiscordBotCPUItems.Add(entry.Value.DiscordBotCPU);
-                        DiscordBotRAMItems.Add(entry.Value.DiscordBotRAM);
-                        LavalinkCPUItems.Add(entry.Value.LavalinkCPU);
-                        LavalinkRAMItems.Add(entry.Value.LavalinkRAM);
+                   
+                        TempSystemUsageLog = SystemUsageLog.ToList();
+                        SystemUsageLog.Clear();
                     }
-                }
-
+                    List<int> PingItems = new List<int>();
+                    List<double> DiscordBotCPUItems = new List<double>();
+                    List<double> DiscordBotRAMItems = new List<double>();
+                    List<double> LavalinkCPUItems = new List<double>();
+                    List<long> LavalinkRAMItems = new List<long>();
+                    foreach (KeyValuePair<DateTime, SystemUsageItem> entry in TempSystemUsageLog.ToList())
+                    {
+                        if ((LogDate - TimeSpan.FromHours(1)) < entry.Key)
+                        {
+                            PingItems.Add(entry.Value.Ping);
+                            DiscordBotCPUItems.Add(entry.Value.DiscordBotCPU);
+                            DiscordBotRAMItems.Add(entry.Value.DiscordBotRAM);
+                            LavalinkCPUItems.Add(entry.Value.LavalinkCPU);
+                            LavalinkRAMItems.Add(entry.Value.LavalinkRAM);
+                        }
+                    }
+                
                 double PingAverage = 0;
                 double DiscordBotCPUAverage = 0;
                 double DiscordBotRAMItemsAverage = 0;
