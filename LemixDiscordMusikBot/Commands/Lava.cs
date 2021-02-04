@@ -317,7 +317,7 @@ namespace LemixDiscordMusikBot.Commands
             long LavalinkRAM = LavaStats.RamUsed;
             try
             {
-                if(!SystemUsageLog.ContainsKey(LogDate))
+                if (!SystemUsageLog.ContainsKey(LogDate))
                     SystemUsageLog.Add(LogDate, new SystemUsageItem(Ping, DiscordBotCPU, DiscordBotRAM, LavalinkCPU, LavalinkRAM));
             }
             catch (Exception ex)
@@ -396,10 +396,10 @@ namespace LemixDiscordMusikBot.Commands
                 return;
             if (e.Message.Id == BotChannelMainMessages[e.Guild.Id] || e.Message.Id == BotChannelBannerMessages[e.Guild.Id] || e.Channel.Id != BotChannels[e.Guild.Id])
                 return;
-            if(e.Message.Embeds.Count > 0)
+            if (e.Message.Embeds.Count > 0)
                 if (e.Message.Embeds.First().Footer != null)
                     if (e.Message.Embeds.First().Footer?.Text == "After 30 seconds this is canceled" && e.Author == s.CurrentUser)
-                    return;
+                        return;
             //await Task.Delay(5000); An event handler caused the invocation of an asynchronous event to time out.
             if (DeletePool != null)
                 if (!DeletePool.ContainsKey(e.Message.Id))
@@ -966,10 +966,24 @@ namespace LemixDiscordMusikBot.Commands
             }
             catch (Exception e)
             {
+                if (e.InnerException is UnauthorizedException)
+                {
+                    ctx.Client.Logger.LogInformation(new EventId(7780, $"Unauthorized Botchannel {GuildId}"), e.ToString());
+                    //if (!BotChannels.ContainsKey(GuildId))
+                    //    return;
+                    //var chnid = BotChannels[GuildId];
+                    //DiscordChannel chn = null;
 
-                ctx.Client.Logger.LogCritical(new EventId(7780, "Botchannel"), e.ToString());
+                    //try { chn = await ctx.Client.GetChannelAsync(chnid);
+
+                    //    //chn.SendMessageAsync("");
+                    //} catch { }
+                }
+                else { ctx.Client.Logger.LogCritical(new EventId(7780, "Botchannel"), e.ToString()); }
+
             }
             // restart task if something errored
+            await Task.Delay(60000);
             await BotChannel(ctx, GuildId);
         }
         private async Task VoiceConnection_PlaybackFinished(LavalinkGuildConnection s, TrackFinishEventArgs e)
@@ -1731,134 +1745,134 @@ namespace LemixDiscordMusikBot.Commands
             // if (!DeletePool.ContainsKey(ctx.Message.Id))
             //    // DeletePool.Add(ctx.Message.Id, new DeleteMessage(ctx.Channel, ctx.Message));
 
-                if (Url.ToString() == String.Empty)
-                    return;
-                if (CheckHasCooldown(ctx))
-                {
-                    SendCooldownAsync(ctx);
-                    return;
-                }
-                if (CheckHasPermission(ctx, role.everyone))
-                    return;
-                if (BotChannels[ctx.Guild.Id] != ctx.Channel.Id)
-                {
-                    SendRestrictedChannelAsync(ctx);
-                    return;
-                }
-                if (ctx.Member.VoiceState?.Channel == null)
-                {
-                    SendNotInAVoiceChannelAsync(ctx);
-                    return;
-                }
-                await JoinAsync(ctx, ctx.Member.VoiceState?.Channel);
-                if (await CheckIsBotChannelAndMessagesExits(ctx))
-                    return;
+            if (Url.ToString() == String.Empty)
+                return;
+            if (CheckHasCooldown(ctx))
+            {
+                SendCooldownAsync(ctx);
+                return;
+            }
+            if (CheckHasPermission(ctx, role.everyone))
+                return;
+            if (BotChannels[ctx.Guild.Id] != ctx.Channel.Id)
+            {
+                SendRestrictedChannelAsync(ctx);
+                return;
+            }
+            if (ctx.Member.VoiceState?.Channel == null)
+            {
+                SendNotInAVoiceChannelAsync(ctx);
+                return;
+            }
+            await JoinAsync(ctx, ctx.Member.VoiceState?.Channel);
+            if (await CheckIsBotChannelAndMessagesExits(ctx))
+                return;
 
-                //if (ctx.Member.VoiceState?.Channel != VoiceConnection.Channel || ctx.Member.VoiceState?.Channel == null)
-                // {
-                //     SendNotInSameChannelAsync(ctx);
-                //      return;
-                // }
-                LavalinkLoadResult trackLoad;
-                var chn = ctx.Guild.GetChannel(BotChannels[ctx.Guild.Id]);
-                var MainMsg = await chn.GetMessageAsync(BotChannelMainMessages[ctx.Guild.Id]);
-                bool IsFirstSong = false;
+            //if (ctx.Member.VoiceState?.Channel != VoiceConnection.Channel || ctx.Member.VoiceState?.Channel == null)
+            // {
+            //     SendNotInSameChannelAsync(ctx);
+            //      return;
+            // }
+            LavalinkLoadResult trackLoad;
+            var chn = ctx.Guild.GetChannel(BotChannels[ctx.Guild.Id]);
+            var MainMsg = await chn.GetMessageAsync(BotChannelMainMessages[ctx.Guild.Id]);
+            bool IsFirstSong = false;
 
-                var notfoundembed = new DiscordEmbedBuilder
-                {
-                    Title = "Song was not found!",
-                    Color = DiscordColor.Red
-                };
-                notfoundembed.AddField("Link:", $"`{Url}`");
-                notfoundembed.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
-                LavalinkGuildConnection VoiceConnection;
-                VoiceConnections.TryGetValue(ctx.Guild.Id, out VoiceConnection);
-                // SOUNDCLOUD API ist schmutz
-                if (Url.ToString().Contains("soundcloud"))
+            var notfoundembed = new DiscordEmbedBuilder
+            {
+                Title = "Song was not found!",
+                Color = DiscordColor.Red
+            };
+            notfoundembed.AddField("Link:", $"`{Url}`");
+            notfoundembed.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
+            LavalinkGuildConnection VoiceConnection;
+            VoiceConnections.TryGetValue(ctx.Guild.Id, out VoiceConnection);
+            // SOUNDCLOUD API ist schmutz
+            if (Url.ToString().Contains("soundcloud"))
+            {
+
+                await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
+                return;
+
+            }
+            else
+            {
+                trackLoad = await this.Lavalink.Rest.GetTracksAsync(Url);
+                if (trackLoad.Tracks.Count() == 0)
                 {
 
                     await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
                     return;
-
                 }
-                else
+                if (Url.ToString().Contains("twitch"))
                 {
-                    trackLoad = await this.Lavalink.Rest.GetTracksAsync(Url);
-                    if (trackLoad.Tracks.Count() == 0)
+                    DiscordEmbedBuilder deb = new DiscordEmbedBuilder
                     {
-                     
-                        await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
-                        return;            
-                    }
-                    if (Url.ToString().Contains("twitch"))
+                        Color = DiscordColor.Blurple,
+                        Description = "Twitch livestreams need a little more time!\nDont worry."
+                    };
+                    await ctx.RespondAsync(embed: deb).ConfigureAwait(false);
+                }
+                if (TrackLoadPlaylists[ctx.Guild.Id].Count == 0)
+                    IsFirstSong = true;
+                foreach (var entry in trackLoad.Tracks)
+                {
+                    if (TrackLoadPlaylists[ctx.Guild.Id].Count > 10000) // max Songs in playlist
                     {
-                        DiscordEmbedBuilder deb = new DiscordEmbedBuilder
+                        DiscordEmbedBuilder embedmaxsong = new DiscordEmbedBuilder
                         {
-                            Color = DiscordColor.Blurple,
-                            Description = "Twitch livestreams need a little more time!\nDont worry."
+                            Title = "You have reached the maximum number of songs in a queue!",
+                            Color = DiscordColor.Red
                         };
-                        await ctx.RespondAsync(embed: deb).ConfigureAwait(false);
-                    }
-                    if (TrackLoadPlaylists[ctx.Guild.Id].Count == 0)
-                        IsFirstSong = true;
-                    foreach (var entry in trackLoad.Tracks)
-                    {
-                        if (TrackLoadPlaylists[ctx.Guild.Id].Count > 10000) // max Songs in playlist
-                        {
-                            DiscordEmbedBuilder embedmaxsong = new DiscordEmbedBuilder
-                            {
-                                Title = "You have reached the maximum number of songs in a queue!",
-                                Color = DiscordColor.Red
-                            };
-                            embedmaxsong.WithFooter("Maximum 10000 songs!");
-                            await ctx.RespondAsync(embed: embedmaxsong);
-                            break;
-                        }
-
-                        TrackLoadPlaylists[ctx.Guild.Id].Add(entry);
+                        embedmaxsong.WithFooter("Maximum 10000 songs!");
+                        await ctx.RespondAsync(embed: embedmaxsong);
+                        break;
                     }
 
+                    TrackLoadPlaylists[ctx.Guild.Id].Add(entry);
                 }
 
-                if (VoiceConnection != null)
-                {
-                    if (IsFirstSong)
-                    {
-                        var track = trackLoad.Tracks.First();
-                        await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, $"Playing `{track.Title}`", ImageUrl: getThumbnail(track), Footer: $"{getQueueCount(ctx.Guild.Id)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(ctx.Guild.Id)}{GetFavoriteMessage(ctx.Guild.Id, track)}");
+            }
 
-                        await VoiceConnection.PlayAsync(TrackLoadPlaylists[ctx.Guild.Id].First());
-                    }
-                    else
-                    {
-                        await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, Footer: $"{getQueueCount(ctx.Guild.Id)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(ctx.Guild.Id)}{GetFavoriteMessage(ctx.Guild.Id, trackLoad.Tracks.First())}");
-                    }
-
-                }
-                if (trackLoad.Tracks.Count() == 1)
+            if (VoiceConnection != null)
+            {
+                if (IsFirstSong)
                 {
-                    var addtolistembed = new DiscordEmbedBuilder
-                    {
-                        Title = $"{trackLoad.Tracks.First().Title} by {trackLoad.Tracks.First().Author}",
-                        Color = DiscordColor.DarkGreen
-                    };
-                    addtolistembed.ImageUrl = getThumbnail(trackLoad.Tracks.First());
-                    addtolistembed.WithAuthor("Song");
-                    addtolistembed.WithFooter($"Use {ctx.Prefix}skip to skip to the next song");
-                    var announcemsg = await ctx.Channel.SendMessageAsync(embed: addtolistembed).ConfigureAwait(false);
+                    var track = trackLoad.Tracks.First();
+                    await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, $"Playing `{track.Title}`", ImageUrl: getThumbnail(track), Footer: $"{getQueueCount(ctx.Guild.Id)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(ctx.Guild.Id)}{GetFavoriteMessage(ctx.Guild.Id, track)}");
+
+                    await VoiceConnection.PlayAsync(TrackLoadPlaylists[ctx.Guild.Id].First());
                 }
                 else
                 {
-                    var addtolistembed = new DiscordEmbedBuilder
-                    {
-                        Title = $"You added {trackLoad.Tracks.Count()} songs to the queue.",
-                        Color = DiscordColor.DarkGreen
-                    };
-                    addtolistembed.ImageUrl = getThumbnail(trackLoad.Tracks.First());
-                    addtolistembed.WithAuthor("Playlist");
-                    addtolistembed.WithFooter($"Use {ctx.Prefix}skip to skip to the next song");
-                    var announcemsg = await ctx.Channel.SendMessageAsync(embed: addtolistembed).ConfigureAwait(false);
+                    await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, Footer: $"{getQueueCount(ctx.Guild.Id)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(ctx.Guild.Id)}{GetFavoriteMessage(ctx.Guild.Id, trackLoad.Tracks.First())}");
                 }
+
+            }
+            if (trackLoad.Tracks.Count() == 1)
+            {
+                var addtolistembed = new DiscordEmbedBuilder
+                {
+                    Title = $"{trackLoad.Tracks.First().Title} by {trackLoad.Tracks.First().Author}",
+                    Color = DiscordColor.DarkGreen
+                };
+                addtolistembed.ImageUrl = getThumbnail(trackLoad.Tracks.First());
+                addtolistembed.WithAuthor("Song");
+                addtolistembed.WithFooter($"Use {ctx.Prefix}skip to skip to the next song");
+                var announcemsg = await ctx.Channel.SendMessageAsync(embed: addtolistembed).ConfigureAwait(false);
+            }
+            else
+            {
+                var addtolistembed = new DiscordEmbedBuilder
+                {
+                    Title = $"You added {trackLoad.Tracks.Count()} songs to the queue.",
+                    Color = DiscordColor.DarkGreen
+                };
+                addtolistembed.ImageUrl = getThumbnail(trackLoad.Tracks.First());
+                addtolistembed.WithAuthor("Playlist");
+                addtolistembed.WithFooter($"Use {ctx.Prefix}skip to skip to the next song");
+                var announcemsg = await ctx.Channel.SendMessageAsync(embed: addtolistembed).ConfigureAwait(false);
+            }
         }
         //Queue with keywords
         [Command("play")]
@@ -1907,10 +1921,8 @@ namespace LemixDiscordMusikBot.Commands
                 };
                 notfoundembed.AddField("Keywords:", $"`{Keywords}`");
                 notfoundembed.WithFooter($"Prefix for this Server is: {ctx.Prefix}");
+                VoiceConnections.TryGetValue(ctx.Guild.Id, out LavalinkGuildConnection VoiceConnection);
 
-
-                LavalinkGuildConnection VoiceConnection;
-                VoiceConnections.TryGetValue(ctx.Guild.Id, out VoiceConnection);
                 LavalinkLoadResult trackLoad;
                 var interactivity = ctx.Client.GetInteractivity();
                 trackLoad = await this.Lavalink.Rest.GetTracksAsync(Keywords);
@@ -1918,7 +1930,8 @@ namespace LemixDiscordMusikBot.Commands
                 {
                     await ctx.RespondAsync(embed: notfoundembed).ConfigureAwait(false);
                     return;
-                }else if(trackLoad.Tracks.Count() == 1)
+                }
+                else if (trackLoad.Tracks.Count() == 1)
                 {
                     TrackLoadPlaylists[ctx.Guild.Id].Add(trackLoad.Tracks.First());
                 }
@@ -1939,7 +1952,7 @@ namespace LemixDiscordMusikBot.Commands
                     foundSongs.WithFooter("After 30 seconds this is canceled");
                     int c = 0;
                     DiscordEmoji emoji = null;
-                    foreach(var track in trackLoad.Tracks)
+                    foreach (var track in trackLoad.Tracks)
                     {
                         c++;
                         switch (c)
@@ -1989,11 +2002,11 @@ namespace LemixDiscordMusikBot.Commands
                                 break;
                         }
                     }
-                    InteractivityResult<MessageReactionAddEventArgs> result = await interactivity.WaitForReactionAsync(x => x.Message == msg && x.User == ctx.Member, new TimeSpan(0,0,30));
+                    InteractivityResult<MessageReactionAddEventArgs> result = await interactivity.WaitForReactionAsync(x => x.Message == msg && x.User == ctx.Member, new TimeSpan(0, 0, 30));
                     if (result.TimedOut)
                     {
-                         if (!DeletePool.ContainsKey(msg.Id))
-                             DeletePool.Add(msg.Id, new DeleteMessage(msg.Channel, msg));
+                        if (!DeletePool.ContainsKey(msg.Id))
+                            DeletePool.Add(msg.Id, new DeleteMessage(msg.Channel, msg));
                         var abort = await ctx.Channel.SendMessageAsync(embed: AbortEmbed);
                         if (!DeletePool.ContainsKey(abort.Id))
                             DeletePool.Add(abort.Id, new DeleteMessage(abort.Channel, abort));
@@ -2021,7 +2034,7 @@ namespace LemixDiscordMusikBot.Commands
                     }
                     if (!DeletePool.ContainsKey(msg.Id))
                         DeletePool.Add(msg.Id, new DeleteMessage(msg.Channel, msg));
-                } 
+                }
                 if (VoiceConnection != null)
                 {
 
@@ -2039,7 +2052,7 @@ namespace LemixDiscordMusikBot.Commands
                         await ModifyMainMsgAsync(MainMsg, DiscordColor.Orange, Footer: $"{getQueueCount(ctx.Guild.Id)} songs in queue | Volume: {Volumes[VoiceConnection]}%{GetLoopMessage(ctx.Guild.Id)}{GetFavoriteMessage(ctx.Guild.Id, TrackLoadPlaylists[ctx.Guild.Id].First())}");
                     }
                     if (trackLoad.Tracks.Count() >= 1)
-                    {                        
+                    {
                         var addtolistembed = new DiscordEmbedBuilder
                         {
                             Title = $"{TrackLoadPlaylists[ctx.Guild.Id].Last().Title} by {TrackLoadPlaylists[ctx.Guild.Id].Last().Author}",
@@ -2058,7 +2071,7 @@ namespace LemixDiscordMusikBot.Commands
             }
 
         }
-       
+
 
         [Command("next"), Description("2Skips to the next song."), Aliases("n", "skip")]
         public async Task NextAsync(CommandContext ctx)
@@ -4371,7 +4384,7 @@ namespace LemixDiscordMusikBot.Commands
                         int len = tracktitles.Count - temptracktitles.Count;
                         TimeSpan restlength = new TimeSpan();
                         string time2;
-                        for(int i1 = tracktitles.Count-len-1; i1 < tracktitles.Count-1; i1++)
+                        for (int i1 = tracktitles.Count - len - 1; i1 < tracktitles.Count - 1; i1++)
                         {
                             restlength = restlength.Add(tracks[i1].Length);
                         }
