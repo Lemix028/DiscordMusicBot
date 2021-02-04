@@ -185,8 +185,8 @@ namespace LemixDiscordMusikBot
 
                 var embed = new DiscordEmbedBuilder
                 {
-                    Title = $"Zugriff verweigert {emoji}",
-                    Description = $"Du oder der Bot hat nicht die nötigen Rechte um den Befehl auszuführen!",
+                    Title = $"Access denied {emoji}",
+                    Description = "You or the bot does not have the necessary rights to execute the command!",
                     Color = DiscordColor.Red
 
                 };

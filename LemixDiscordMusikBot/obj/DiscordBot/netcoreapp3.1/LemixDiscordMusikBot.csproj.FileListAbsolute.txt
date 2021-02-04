@@ -37,7 +37,6 @@ C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\Disco
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\System.Security.Permissions.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\System.Security.Principal.Windows.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\System.Windows.Extensions.dll
-C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\System.Xml.XPath.XmlDocument.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\runtimes\win-x64\native\libopus.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\runtimes\win-x64\native\libsodium.dll
 C:\Users\Marvin\source\repos\LemixDiscordMusikBot\LemixDiscordMusikBot\bin\DiscordBot\netcoreapp3.1\runtimes\win-x86\native\libopus.dll

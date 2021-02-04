@@ -699,6 +699,8 @@ namespace LemixDiscordMusikBot.Commands
                         continue;
                     }
                     await MainMsg.DeleteReactionAsync(result.Result.Emoji, result.Result.User);
+                    if (!TrackLoadPlaylists.ContainsKey(GuildId))
+                        continue;
                     if (result.Result.Emoji == PlayPause)
                     {
                         if (!VoiceConnections.TryGetValue(GuildId, out LavalinkGuildConnection VoiceConnection))
@@ -832,7 +834,7 @@ namespace LemixDiscordMusikBot.Commands
                     }
                     else if (result.Result.Emoji == Crossed)
                     {
-
+                       
                         if (TrackLoadPlaylists[GuildId].Count == 0)
                             continue;
                         if (!FavoritesTracksLists.ContainsKey(GuildId))
@@ -4569,8 +4571,28 @@ namespace LemixDiscordMusikBot.Commands
                 }
                 return;
             }
+            try
+            { DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: cooldownembed);}
+            catch(UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
 
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: cooldownembed);
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin. \nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
+
             //DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendRestrictedChannelAsync(CommandContext ctx, ulong GuildId = 0)
@@ -4593,8 +4615,31 @@ namespace LemixDiscordMusikBot.Commands
                 Description = $"This command is restricted to {chn.Mention}.",
                 Color = DiscordColor.Orange
             };
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: RestrictedChannelEmbed);
-            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            try
+            {
+                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: RestrictedChannelEmbed);
+            }
+            catch (UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
+
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
+           
+           
         }
         private async void SendNotInSameChannelAsync(CommandContext ctx)
         {
@@ -4603,18 +4648,61 @@ namespace LemixDiscordMusikBot.Commands
                 Description = "You need to be in the same Channel with the Bot.",
                 Color = DiscordColor.Orange
             };
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            try
+            {
+                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
+            }
+            catch (UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
+
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
+           
         }
         private async void SendNotConnectedAsync(CommandContext ctx)
         {
-            var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
+            var SendNotConnectedEmbed = new DiscordEmbedBuilder
             {
                 Description = "The Bot is not connected.",
                 Color = DiscordColor.Orange
             };
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            try
+            {
+                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotConnectedEmbed);
+            }
+            catch (UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
+
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
         }
         private async void SendNeedSetupAsync(CommandContext ctx)
         {
@@ -4623,38 +4711,125 @@ namespace LemixDiscordMusikBot.Commands
                 Description = $"You need to execute the setup before you can use this command. \n For more information use ***{ctx.Prefix}help setup***.",
                 Color = DiscordColor.Orange
             };
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            //   // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            try
+            {
+                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
+            }
+            catch (UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
+
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
         }
         private async void SendNotInAVoiceChannelAsync(CommandContext ctx)
         {
-            var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
+            var SendNotInAVoiceChannelEmbed = new DiscordEmbedBuilder
             {
                 Description = "You are not in a voicechannel or have specified a channel.",
                 Color = DiscordColor.Orange
             };
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
+            try
+            {
+                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInAVoiceChannelEmbed);
+            }
+            catch (UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
+
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
+            
             // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
         }
         private async void SendQueueIsEmptyAsync(CommandContext ctx)
         {
-            var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
+            var SendQueueIsEmptyEmbed = new DiscordEmbedBuilder
             {
                 Description = $"The queue is empty.",
                 Color = DiscordColor.Orange
             };
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            
+            try
+            {
+                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendQueueIsEmptyEmbed);
+            }
+            catch (UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
+
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
         }
         private async void SendNoPermssionAsync(CommandContext ctx)
         {
-            var SendNotInSameChannelEmbed = new DiscordEmbedBuilder
+            var SendNoPermssionEmbed = new DiscordEmbedBuilder
             {
                 Description = $"You are not allowed to execute the command!",
                 Color = DiscordColor.Red
             };
-            DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNotInSameChannelEmbed);
-            // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
+            try
+            {
+                DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendNoPermssionEmbed);
+            }
+            catch (UnauthorizedException)
+            {
+                var embed = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
+
+                };
+                embed.AddField("Missing permissions:", "Send messages");
+                embed.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {ctx.Prefix}support.");
+                try
+                {
+                    var dmchannel = await ctx.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed);
+                }
+                catch { }
+
+            }
         }
         private bool CheckHasPermission(CommandContext ctx, role NeededRole, DiscordMember member = null, ulong GuildId = 0)
         {
