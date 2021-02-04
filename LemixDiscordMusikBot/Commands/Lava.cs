@@ -964,23 +964,24 @@ namespace LemixDiscordMusikBot.Commands
 
 
             }
-            catch (Exception e)
+            catch (UnauthorizedException)
             {
-                if (e.InnerException is UnauthorizedException)
-                {
-                    ctx.Client.Logger.LogInformation(new EventId(7780, $"Unauthorized Botchannel {GuildId}"), e.ToString());
-                    //if (!BotChannels.ContainsKey(GuildId))
-                    //    return;
-                    //var chnid = BotChannels[GuildId];
-                    //DiscordChannel chn = null;
 
-                    //try { chn = await ctx.Client.GetChannelAsync(chnid);
+                ctx.Client.Logger.LogInformation(new EventId(7780, "Botchannel"), $"Unauthorized Botchannel {GuildId}");
+                //if (!BotChannels.ContainsKey(GuildId))
+                //    return;
+                //var chnid = BotChannels[GuildId];
+                //DiscordChannel chn = null;
 
-                    //    //chn.SendMessageAsync("");
-                    //} catch { }
-                }
-                else { ctx.Client.Logger.LogCritical(new EventId(7780, "Botchannel"), e.ToString()); }
+                //try { chn = await ctx.Client.GetChannelAsync(chnid);
 
+                //    //chn.SendMessageAsync("");
+                //} catch { }
+            }
+            catch(Exception e)
+            {
+                ctx.Client.Logger.LogCritical(new EventId(7780, "Botchannel"), e.ToString());
+               
             }
             // restart task if something errored
             await Task.Delay(60000);
