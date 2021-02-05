@@ -435,6 +435,7 @@ namespace LemixDiscordMusikBot.Commands
 
         private async Task<Task> OnCommandErrored(CommandsNextExtension s, CommandErrorEventArgs e)
         {
+            
             var UnkownCommandEmbed = new DiscordEmbedBuilder
             {
                 Title = $"Command not found!",
@@ -452,31 +453,26 @@ namespace LemixDiscordMusikBot.Commands
                 Description = $"If this problem persists please report it to support\n Use: {e.Context.Prefix}support",
                 Color = DiscordColor.Red
             };
-            if (e.Exception is DSharpPlus.CommandsNext.Exceptions.CommandNotFoundException)
-            {
-                //var msg = await e.Context.Channel.SendMessageAsync(embed: UnkownCommandEmbed);
-                //if (!DeletePool.ContainsKey(msg.Id))
-                //    DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
-            }
-            else if (e.Exception is ArgumentException)
-            {
-                var msg = await e.Context.Channel.SendMessageAsync(embed: ArgumentCommandEmbed);
-                // if (!DeletePool.ContainsKey(msg.Id))
-                //    // DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
+            if (!(e.Exception is UnauthorizedException)) {
+                if (e.Exception is DSharpPlus.CommandsNext.Exceptions.CommandNotFoundException)
+                {
 
+                }
+                else if (e.Exception is ArgumentException)
+                {
+                    await e.Context.Channel.SendMessageAsync(embed: ArgumentCommandEmbed);
+                }
+                else
+                {
+                    s.Client.Logger.LogError(new EventId(7776, "UnkownError"), $"Unknown command error has occurred! (Command: {e.Context.Message.Content} Exception: {e.Exception})");
+                    await e.Context.Channel.SendMessageAsync(embed: UnkownEmbed);
+                }
             }
-            else
-            {
-                s.Client.Logger.LogError(new EventId(7776, "UnkownError"), $"Unknown command error has occurred! (Command: {e.Context.Message.Content} Exception: {e.Exception})");
-                var msg = await e.Context.Channel.SendMessageAsync(embed: UnkownEmbed);
-                //   if (!DeletePool.ContainsKey(msg.Id))
-                //       // DeletePool.Add(msg.Id, new DeleteMessage(e.Context.Channel, msg));
-            }
+            
             if (e.Context.Guild == null)
                 return Task.CompletedTask;
             if (!Cooldown.ContainsKey(e.Context.Guild.Id))
                 return Task.CompletedTask;
-            //  await Task.Delay(CommandCooldown);
             if (Cooldown.ContainsKey(e.Context.Guild.Id))
                 Cooldown[e.Context.Guild.Id] = false;
             return Task.CompletedTask;
@@ -3414,6 +3410,7 @@ namespace LemixDiscordMusikBot.Commands
                     Color = DiscordColor.Orange
                 };
                 DiscordMessage msg = await ctx.Channel.SendMessageAsync(embed: SendRoleNotFoundEmbed);
+               // ctx.Guild.GetRole();
                 // DeletePool.Add(msg.Id, new DeleteMessage(ctx.Channel, msg));
                 return;
             }

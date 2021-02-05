@@ -18,6 +18,7 @@ using System.Linq;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using DSharpPlus.Interactivity.Extensions;
+using DSharpPlus.Exceptions;
 
 namespace LemixDiscordMusikBot
 {
@@ -178,7 +179,25 @@ namespace LemixDiscordMusikBot
 
         private async Task OnCommandError(CommandsNextExtension s, CommandErrorEventArgs e)
         {
-            if (e.Exception is ChecksFailedException)
+            if(e.Exception is UnauthorizedException)
+            {  
+                    var embed1 = new DiscordEmbedBuilder
+                    {
+                        Title = "Missing Permission!",
+                        Description = "The bot does not have the necessary rights to execute the command!",
+                        Color = DiscordColor.Red
+
+                    };
+                    embed1.AddField("Missing permissions:", "Send messages");
+                    embed1.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {e.Context.Prefix}support.");
+                    try
+                    {
+                        var dmchannel = await e.Context.Member.CreateDmChannelAsync();
+                        await dmchannel.SendMessageAsync(embed: embed1);
+                    }
+                    catch { }
+            }
+            else if (e.Exception is ChecksFailedException)
             {
 
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
@@ -193,8 +212,7 @@ namespace LemixDiscordMusikBot
                 try
                 {
                     await e.Context.RespondAsync(embed: embed);
-                }
-                catch { }
+                }catch { }
 
             }
             if (e.Exception is ArgumentException && e.Context.RawArgumentString == String.Empty)
