@@ -19,6 +19,10 @@ using Microsoft.Extensions.Logging;
 using System.Reflection;
 using DSharpPlus.Interactivity.Extensions;
 using DSharpPlus.Exceptions;
+using System.Threading;
+using LemixDiscordMusikBot.Classes;
+using LemixDiscordMusikBot.Classes.Database;
+using System.Net.WebSockets;
 
 namespace LemixDiscordMusikBot
 {
@@ -29,7 +33,6 @@ namespace LemixDiscordMusikBot
 
         public Dictionary<ulong, List<String>> Prefixes = new Dictionary<ulong, List<String>>();
         public IReadOnlyDictionary<int, CommandsNextExtension> CommandsTask { get; set; }
-
         private DBConnection db;
 
         public Boolean debug = true;
@@ -38,7 +41,9 @@ namespace LemixDiscordMusikBot
 
         public async Task StartAsync()
         {
+            var watch = System.Diagnostics.Stopwatch.StartNew();
 
+            #region readconfig
             var json = string.Empty;
             try
             {
@@ -89,6 +94,12 @@ namespace LemixDiscordMusikBot
                     Console.WriteLine("Unbekannter Fehler beim Lesen der Config!");
                 }
             }
+            #endregion
+
+            if (configJson.Shards <= 0)
+                throw new Exception("Invalid Shards count");
+            if (configJson.BotUsername == "")
+                throw new Exception("Botname cannot empty");
 
             DiscordConfiguration dconfig = new DiscordConfiguration()
             {
@@ -98,7 +109,7 @@ namespace LemixDiscordMusikBot
                 LogTimestampFormat = "dd-MM-yyyy HH:mm:ss",
                 MinimumLogLevel = LogLevel.Debug,
                 Intents = DiscordIntents.All,
-                ShardCount = 1
+                ShardCount = configJson.Shards
 
             };
             Client = new DiscordShardedClient(dconfig);
@@ -109,11 +120,12 @@ namespace LemixDiscordMusikBot
             Client.GuildDeleted += async (s, e) => { await OnGuildDeleted(s, e); };
             Client.ClientErrored += async (s, e) => { await OnClientError(s, e); };
             Client.MessageReactionAdded += async (s, e) => { await OnMessageReactionAdded(s, e); };
-
-
+            Variables.Logger = Client.Logger;
+            Variables.DiscordShardedClient = Client;
+            
             CommandsNextConfiguration commandsConfig = new CommandsNextConfiguration
             {
-                //             StringPrefixes = configJson.Prefix,
+                //StringPrefixes = configJson.Prefix, //deprecated
                 EnableDms = false,
                 DmHelp = true,
                 PrefixResolver = ResolvePrefixAsync,
@@ -127,6 +139,9 @@ namespace LemixDiscordMusikBot
                 cmd.RegisterCommands<Lava>();
                 cmd.CommandExecuted += async (s, e) => { await OnCommandExecuted(s, e); }; ;
                 cmd.CommandErrored += async (s, e) => { await OnCommandError(s, e); }; ;
+
+                //Lavalink
+                Variables.WaitForLavalinkConnect.Add(entry.Key, new AutoResetEvent(false));
             }
             //Error log fehlt
             InteractivityConfiguration icfg = new InteractivityConfiguration
@@ -149,14 +164,30 @@ namespace LemixDiscordMusikBot
             var LavaTask = Client.UseLavalinkAsync();
 
 
-
             foreach (KeyValuePair<int, LavalinkExtension> entry in LavaTask.Result)
             {
+                LavalinkNodeConnection la = null;
                 var l = entry.Value;
-                var la = await l.ConnectAsync(lcfg);
-                la.LavalinkSocketErrored += async (s, e) => { await LavaLinkSocketError(s, e, Client); }; ;
-                l.NodeDisconnected += async (s, e) => { await LavaLinkNodeDisconnect(s, e); }; ;
+                try
+                {
+                    la = await l.ConnectAsync(lcfg);
+                }
+                catch (WebSocketException we)
+                {
+                    Client.Logger.LogCritical(new EventId(7777, "LavalinkStartup"), $"Code: {we.ErrorCode}: {we.Message}");
+                }
+                if (la != null)
+                {
+                    la.LavalinkSocketErrored += async (s, e) => { await LavaLinkSocketError(s, e, Client); }; ;
+                    l.NodeDisconnected += async (s, e) => { await LavaLinkNodeDisconnect(s, e); }; ;
+                    Variables.WaitForLavalinkConnect.TryGetValue(entry.Key, out EventWaitHandle handle);
+                    handle.Set();
+                    Client.Logger.LogInformation(new EventId(7777, "LavalinkStartup"), $"Shard {entry.Key + 1} wait for Lavalink Node Connection");
+                }
+
             }
+            watch.Stop();
+            Client.Logger.LogInformation(new EventId(7777, "Startup"), $"Completed Bot initialization in {watch.ElapsedMilliseconds} ms");
             await Task.Delay(-1);
 
         }
@@ -179,23 +210,23 @@ namespace LemixDiscordMusikBot
 
         private async Task OnCommandError(CommandsNextExtension s, CommandErrorEventArgs e)
         {
-            if(e.Exception is UnauthorizedException)
-            {  
-                    var embed1 = new DiscordEmbedBuilder
-                    {
-                        Title = "Missing Permission!",
-                        Description = "The bot does not have the necessary rights to execute the command!",
-                        Color = DiscordColor.Red
+            if (e.Exception is UnauthorizedException)
+            {
+                var embed1 = new DiscordEmbedBuilder
+                {
+                    Title = "Missing Permission!",
+                    Description = "The bot does not have the necessary rights to execute the command!",
+                    Color = DiscordColor.Red
 
-                    };
-                    embed1.AddField("Missing permissions:", "Send messages");
-                    embed1.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {e.Context.Prefix}support.");
-                    try
-                    {
-                        var dmchannel = await e.Context.Member.CreateDmChannelAsync();
-                        await dmchannel.SendMessageAsync(embed: embed1);
-                    }
-                    catch { }
+                };
+                embed1.AddField("Missing permissions:", "Send messages");
+                embed1.WithFooter($"If you are not an admin of this server, please inform an admin.\nIf the error persists then please inform our support with {e.Context.Prefix}support.");
+                try
+                {
+                    var dmchannel = await e.Context.Member.CreateDmChannelAsync();
+                    await dmchannel.SendMessageAsync(embed: embed1);
+                }
+                catch { }
             }
             else if (e.Exception is ChecksFailedException)
             {
@@ -212,7 +243,8 @@ namespace LemixDiscordMusikBot
                 try
                 {
                     await e.Context.RespondAsync(embed: embed);
-                }catch { }
+                }
+                catch { }
 
             }
             if (e.Exception is ArgumentException && e.Context.RawArgumentString == String.Empty)
@@ -270,7 +302,7 @@ namespace LemixDiscordMusikBot
             }
             db.Disconnect();
             if (isEmpty)
-                db.Execute($"INSERT INTO data (GuildId, Prefix) VALUES ({e.Guild.Id}, '{prefixes}')");
+                Data.AddNewGuild(e.Guild.Id, prefixes.ToString());
 
 
             s.Logger.LogInformation(new EventId(7777, "GuildCreated"), $"Guild available: {e.Guild.Name}");
@@ -311,7 +343,7 @@ namespace LemixDiscordMusikBot
             }
             db.Disconnect();
             if (isEmpty)
-                db.Execute($"INSERT INTO data (GuildId, Prefix) VALUES ({e.Guild.Id}, '{prefixes}')");
+                Data.AddNewGuild(e.Guild.Id, prefixes.ToString());
 
 
             s.Logger.LogInformation(new EventId(7777, "GuildAvailable"), $"Guild available: {e.Guild.Name}");
@@ -328,7 +360,6 @@ namespace LemixDiscordMusikBot
         private async Task<Task> OnClientReady(DiscordClient s, ReadyEventArgs e)
         {
 
-
             try
             {
                 try
@@ -336,20 +367,20 @@ namespace LemixDiscordMusikBot
                     if (s.CurrentUser.Username != configJson.BotUsername)
                     {
                         await s.UpdateCurrentUserAsync(configJson.BotUsername);
-                        s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username set to '{configJson.BotUsername}'");
+                        s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Shard {s.ShardId} Username set to '{configJson.BotUsername}'");
                     }
                     else
                     {
-                        s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Username is already '{configJson.BotUsername}'");
+                        s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Shard {s.ShardId} Username is already '{configJson.BotUsername}'");
                     }
 
                 }
                 catch
                 {
-                    s.Logger.LogWarning(new EventId(7777, "ClientReady"), "Username cannot be set. Maybe you have reached the limit, try again later.");
+                    s.Logger.LogWarning(new EventId(7777, "ClientReady"), $"Shard {s.ShardId} Username cannot be set. Maybe you have reached the limit, try again later.");
                 }
 
-                s.Logger.LogInformation(new EventId(7777, "ClientReady"), "Client is ready to process events");
+                s.Logger.LogInformation(new EventId(7777, "ClientReady"), $"Shard {s.ShardId} Client is ready to process events");
                 await Task.Factory.StartNew(() => UpdateStatus(s, e));
 
             }
@@ -364,31 +395,25 @@ namespace LemixDiscordMusikBot
         {
             try
             {
+                var cmd = s.GetCommandsNext();
                 Version version = Assembly.GetExecutingAssembly().GetName().Version;
                 DateTime buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
-                int i = 0;
                 await Task.Delay(500);
-                var guild = CommandsTask.Values.First().Client.GetGuildAsync(696753707479597086);
+                var guild = cmd.Client.GetGuildAsync(696753707479597086);
                 var chn = await guild.Result.GetMemberAsync(267645496020041729);
                 DiscordEmbedBuilder BootedEmbed = new DiscordEmbedBuilder
                 {
-                    Title = "Bot succesfully booted!",
+                    Title = $"Shard {s.ShardId} succesfully booted!",
                     Description = $"Botname: `{s.CurrentUser.Username}`\nId: `{s.CurrentUser.Id}`\nDSharpPlus Version: `{s.VersionString}`\nVersion: `{version}`\nBuild Date: `{buildDate}`",
                     Color = DiscordColor.DarkGreen
                 };
                 BootedEmbed.WithFooter("Programmed by Lemix | Powered by DSharpPlus");
                 BootedEmbed.WithThumbnail(s.CurrentUser.AvatarUrl);
 
-                //foreach (KeyValuePair<int, DiscordClient> entry in Client.ShardClients)
-                //{
-                //    foreach (KeyValuePair<ulong, DiscordGuild> guild1 in entry.Value.Guilds)
-                //    {
-                //        await guild1.Value.Owner.SendMessageAsync("Hi");
-                //    }
-                //}
+
                 var msg = await chn.SendMessageAsync("", embed: BootedEmbed);
-                var ctx = CommandsTask.Values.First().CreateContext(msg, "!", CommandsTask.Values.First().RegisteredCommands.ToList().Find(x => x.Key.Equals("init", StringComparison.OrdinalIgnoreCase)).Value);
-                await CommandsTask.Values.First().ExecuteCommandAsync(ctx);
+                var ctx = cmd.CreateContext(msg, "!", cmd.RegisteredCommands.ToList().Find(x => x.Key.Equals("init", StringComparison.OrdinalIgnoreCase)).Value);
+                await cmd.ExecuteCommandAsync(ctx);
                 DateTime LastRefresh = DateTime.Now;
                 int StatusCount = 0;
                 while (true)
@@ -399,8 +424,6 @@ namespace LemixDiscordMusikBot
                     entry = configJson.StatusItems[StatusCount];
                     StatusCount++;
                     await s.UpdateStatusAsync(new DiscordActivity($"{String.Format(entry.Text, GuildCount)}", entry.Activity), entry.StatusType);
-
-                    i = GuildCount;
                     await Task.Delay(configJson.StatusRefreshTimer);
                 }
             }

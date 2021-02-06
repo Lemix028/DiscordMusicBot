@@ -9,6 +9,8 @@ namespace LemixDiscordMusikBot
     {
         [JsonProperty("token")]
         public String Token { get;  set; }
+        [JsonProperty("shards")]
+        public int Shards { get; set; }
         [JsonProperty("prefix")]
         public String[] Prefix { get;  set; }
         [JsonProperty("BotUsername")]

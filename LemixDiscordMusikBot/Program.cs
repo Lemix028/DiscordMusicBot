@@ -16,10 +16,14 @@ namespace LemixDiscordMusikBot
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
             DateTime buildDate = new DateTime(2000, 1, 1).AddDays(version.Build).AddSeconds(version.Revision * 2);
             string Version = $"{version} \n   Build Date: ({buildDate})";
+            Console.Title = $"Discordbot by Lemix {Version}";
 
+
+            #region Default Config
             Config NewConfig = new Config();
             NewConfig.Token = "";
-            NewConfig.Prefix = new string[] { "!", "?" };
+            NewConfig.Shards = 1;
+            NewConfig.Prefix = new string[] { "!" };
             NewConfig.LavalinkServerIP = "127.0.0.1";
             NewConfig.LavalinkServerPassword = "youshallnotpass";
             NewConfig.LavalinkServerPort = 2333;
@@ -35,8 +39,8 @@ namespace LemixDiscordMusikBot
             NewConfig.NoSongPicture = "https://www.bund.net/fileadmin/user_upload_bund/bilder/tiere_und_pflanzen/bedrohte_arten/fischotter.jpg";
             NewConfig.BannerPicture = "https://www.fotor.com/blog/wp-content/uploads/2017/09/1-2.jpg";
             NewConfig.BotChannelRebuild = false;
-
-            Console.Title = $"Discordbot by Lemix {Version}";
+            #endregion
+            
 
             DiscordBot bot = new DiscordBot();
             try
@@ -54,6 +58,7 @@ namespace LemixDiscordMusikBot
         
 
 ");
+                #region Configstuff 
                 Console.ForegroundColor = ConsoleColor.Gray;
                 if (args.Length != 0)
                 {
@@ -125,6 +130,7 @@ namespace LemixDiscordMusikBot
                 Console.WriteLine("Press any Key to close the Window");
                 Console.ReadKey();
             }
+            #endregion
 
         }
     }

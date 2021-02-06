@@ -9,7 +9,7 @@ namespace LemixDiscordMusikBot.Commands
     [Serializable]
     public struct LavaVariables
     {
-
+        // DEPRECATED CODE NO LONGER IN USE (I think so)
         [JsonProperty("BotChannels")]
         public Dictionary<ulong, ulong> BotChannels { get; set; }
         [JsonProperty("CheckAFKStates")]

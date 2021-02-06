@@ -1,4 +1,5 @@
 ﻿using DSharpPlus;
+using LemixDiscordMusikBot.Classes;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
@@ -39,6 +40,7 @@ namespace LemixDiscordMusikBot
                 this.uid = configJson.DatabaseUid;
                 this.pwd = configJson.DatabasePassword;
                 this.port = configJson.DatabasePort;
+                Variables.MysqlConnectionString = "SERVER=" + server + ";" + "PORT=" + port + ";" + "DATABASE=" + database + ";" + "UID=" + uid + ";" + "PASSWORD=" + pwd + ";";
                 this.conn = new MySqlConnection("SERVER=" + server + ";" + "PORT=" + port + ";" + "DATABASE=" + database + ";" + "UID=" + uid + ";" + "PASSWORD=" + pwd + ";");
                 this.logger = logger;
                 logger.LogInformation(new EventId(7777, "Database"), $"Database initialized. [{uid}@{server}:{port}]");

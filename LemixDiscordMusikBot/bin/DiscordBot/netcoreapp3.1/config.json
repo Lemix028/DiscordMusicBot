@@ -1,6 +1,7 @@
 {
   "token": "NzYwNTM5MTUyMTY0MDYxMjI2.X3NhSA._Vm4mCL8iFncCOQkiT6VYXyLXhA",
-  "prefix": ["!", "?"],
+  "shards":  3,
+  "prefix": ["!"],
   "BotUsername": "Botname",
   "LavalinkServerIP": "localhost",
   "LavalinkServerPort": 2333,

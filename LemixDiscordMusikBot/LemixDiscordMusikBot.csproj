@@ -10,11 +10,11 @@
     <Product>Discord Music Bot</Product>
     <Copyright>Lemix</Copyright>
     <Company />
-    <AssemblyVersion>2.4.*</AssemblyVersion>
+    <AssemblyVersion>3.0.*</AssemblyVersion>
     <Deterministic>false</Deterministic>
-    <FileVersion>2.2.0.0</FileVersion>
+    <FileVersion>3.0.0.0</FileVersion>
     <SignAssembly>false</SignAssembly>
-    <Version>2.4</Version>
+    <Version>3.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <NeutralLanguage>Englisch</NeutralLanguage>
   </PropertyGroup>
