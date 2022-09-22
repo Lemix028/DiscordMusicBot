@@ -1,0 +1,28 @@
+{
+  "token": "apikey",
+  "shards": 3,
+  "prefix": [ "!" ],
+  "BotUsername": "Botname",
+  "LavalinkServerIP": "",
+  "LavalinkServerPort": 2333,
+  "LavalinkServerPassword": "",
+  "DatabaseHostname": "",
+  "DatabaseDbName": "",
+  "DatabaseUid": "root",
+  "DatabasePassword": "",
+  "DatabasePort": 3306,
+  "StatusItems": [
+    {
+      "Text": "auf {0} Servern | Made by Lemix",
+      "Activity": 1,
+      "StatusType": "online"
+    }
+  ],
+  "StatusRefreshTimer": 120000,
+  "BannerPicture": "https://cdn.discordapp.com/attachments/637637651335217152/790319971916841010/test-pattern-152459_960_720.webp",
+  "NoSongPicture": "https://images-ext-1.discordapp.net/external/Y0Q-sqfVHVgTCK4PISibB52Y2BCXW3kSO3x8kqArf1c/https/64.media.tumblr.com/3c06dff2a35c4f2f46e1ee01322d44a6/tumblr_okt94f1Dis1s3abbdo1_500.gifv",
+  "DefaultVolume": 10,
+  "BotChannelRebuild": false
+}
+
+
